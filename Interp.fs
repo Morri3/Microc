@@ -96,12 +96,12 @@ type gloEnv = int env * funEnv
 //地址是store上的的索引值
 type address = int
 
-// store 是一个 地址到值的映射，是对内存的抽象 ⭐⭐⭐
-// store 是可更改的数据结构，特定位置的值可以修改，注意与环境的区别
+// store存储 是一个 地址到值的映射，是对内存的抽象 ⭐⭐⭐
+// store存储 是可更改的数据结构，特定位置的值可以修改，注意与环境的区别
 // map{(0,3);(1,8) }
 // 位置 0 保存了值 3
 // 位置 1 保存了值 8
-
+// 通过Map实现store
 type store = Map<address, int>
 
 //空存储
@@ -280,7 +280,7 @@ let rec exec stmt (locEnv: locEnv) (gloEnv: gloEnv) (store: store) : store =
         // 语句块 解释辅助函数 loop
         let rec loop ss (locEnv, store) =
             match ss with
-            | [] -> store
+            | [] -> store    //空就返回store存储
             //语句块,解释 第1条语句s1
             // 调用loop 用变更后的环境 解释后面的语句 sr.
             | s1 :: sr -> loop sr (stmtordec s1 locEnv gloEnv store)

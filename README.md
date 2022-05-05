@@ -12,7 +12,7 @@ grammar.txt                           文法定义
 CLex.fsl                              fslex词法定义
 CPar.fsy                              fsyacc语法定义
 Parse.fs                              语法解析器
-Interp.fs                             解释器
+Interp.fs                             解释器（解释器主文件）
 example/ex1.c-ex25.c                  示例程序
 interpc.fsproj                        项目文件
 ```
@@ -22,15 +22,15 @@ interpc.fsproj                        项目文件
 ```sh
 Machine.fs                            VM 指令定义
 Machine.java                          VM 实现 java
-machine.c                              VM 实现 c 
+machine.c                             VM 实现 c 
 machine.cs                            VM 实现 c#
-machine.csproj                           VM 项目文件
+machine.csproj                        VM 项目文件
 
-Comp.fs                               编译器 输出 stack vm 指令序列
-Backend.fs                 编译器后端 翻译 stack vm 指令序列到 x86_64
-driver.c                   运行时支持程序
-prog0                    字节码 案例，输出数字
-prog1                     字节码 案例，循环2千万次
+Comp.fs                            编译器 输出 stack vm 指令序列
+Backend.fs                         编译器后端 翻译 stack vm 指令序列到 x86_64
+driver.c                           运行时支持程序
+prog0                              字节码 案例，输出数字
+prog1                              字节码 案例，循环2千万次
 microc.fsproj                      编译器项目文件
 ```
 
@@ -38,12 +38,12 @@ microc.fsproj                      编译器项目文件
 
 ```sh
 Contcomp.fs                       优化编译器
-microcc.fsproj                       优化编译器项目文件
+microcc.fsproj                    优化编译器项目文件
 ```
 
 
 
-## 二、项目运行顺序⭐⭐
+## 二、项目运行顺序⭐⭐⭐
 
 ### ###解释器
 
@@ -55,12 +55,12 @@ microcc.fsproj                       优化编译器项目文件
 # 编译解释器 interpc.exe 命令行程序 
 dotnet restore interpc.fsproj   # 可选
 dotnet clean interpc.fsproj     # 可选
-dotnet build -v n interpc.fsproj # 构建./bin/Debug/net6.0/interpc.exe ，-v n查看详细生成过程
+dotnet build -v n interpc.fsproj # 构建./bin/Debug/net6.0/interpc.exe，其中-v n查看详细生成过程.
 
 # 执行解释器
 ./bin/Debug/net6.0/interpc.exe example/ex1.c 8
 dotnet run --project interpc.fsproj example/ex1.c 8
-dotnet run --project interpc.fsproj -g example/ex1.c 8  //显示token AST 等调试信息
+dotnet run --project interpc.fsproj -g example/ex1.c 8  #显示token（词元）、AST（抽象语法树）等调试信息，最后的8s
 
 # 自行修改 interpc.fsproj  解释example目录下的源文件
 # <MyItem Include="example\function1.c" Args ="8"/> 

@@ -97,9 +97,9 @@ rule Token = parse          // 每个 规则rule 会生成为一个函数，函�
   | _               { failwith "Lexer error: illegal symbol" }
 
 and Comment = parse
-   | "/*"           { Comment lexbuf; Comment lexbuf }  // 注释的嵌套处理
+   | "/*"           { Comment lexbuf; Comment lexbuf }  // 注释的嵌套调用处理
    | "*/"           { () }                           // 注释处理结束
-   | '\n'           { lexbuf.EndPos <- lexbuf.EndPos.NextLine; Comment lexbuf } //注释跨行处理
+   | '\n'           { lexbuf.EndPos <- lexbuf.EndPos.NextLine; Comment lexbuf } //注释跨行处理，A<-B表示把内容A替换为B
    | (eof | '\026') { failwith "Lexer error: unterminated comment" }  // 多行注释未封闭
    | _              { Comment lexbuf }  // 其他任意情况都继续处理后续字符
 

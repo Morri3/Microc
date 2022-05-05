@@ -11,14 +11,15 @@ open Absyn      //Absyn包 包含抽象语法树的结点
 // compose1函数：取出 类型构造子g，用 类型复合机制 构造类型。
 // 该文件中的$1表示第一个位置的元素，以此类推，$3表示第三个位置的元素
   // fun x -> g(f(x)) 表示：函数x，它返回的内容是g(f(x))
+//  compose1函数是 类型分步构造 的关键
 
 let compose1 f (g, s) = ((fun x -> g(f(x))), s)
 let nl = CstI 10 //  10是\n的ASCII码
 %}
 
 //%token是词元说明符
-%token <int> CSTINT CSTBOOL  // <int> 是词元的语义值类型
-%token <string> CSTSTRING NAME // CSTSTRING、NAME都是string类型
+%token <int> CSTINT CSTBOOL           // <int> 是词元的语义值类型
+%token <string> CSTSTRING NAME        // CSTSTRING、NAME都是string类型
 
 %token CHAR ELSE IF INT NULL PRINT PRINTLN RETURN VOID WHILE
 %token PLUS MINUS TIMES DIV MOD
@@ -28,18 +29,18 @@ let nl = CstI 10 //  10是\n的ASCII码
 %token EOF
 
 %right ASSIGN             /* 最低优先级 */  // 最下面的优先级最高
-%nonassoc PRINT          //打印
-%left SEQOR              //逻辑或
-%left SEQAND             //逻辑与
-%left EQ NE              //== !=
-%nonassoc GT LT GE LE    //大于 小于 大于等于 小于等于
-%left PLUS MINUS         //加 减
-%left TIMES DIV MOD      //乘 除 取余
-%nonassoc NOT AMP        //!取反 &按位与
+%nonassoc PRINT           //打印
+%left SEQOR               //逻辑或
+%left SEQAND              //逻辑与
+%left EQ NE               //== !=
+%nonassoc GT LT GE LE     //大于 小于 大于等于 小于等于
+%left PLUS MINUS          //加 减
+%left TIMES DIV MOD       //乘 除 取余
+%nonassoc NOT AMP         //!取反 &按位与
 %nonassoc LBRACK          /* 最高优先级  */  //左括号
 
-%start Main            // 语法开始符号
-%type <Absyn.program> Main   // 开始符号，对应抽象语法树节点类型, program
+%start Main               // 语法开始符号
+%type <Absyn.program> Main       // 开始符号，对应抽象语法树节点类型, program
 
 %%
 
@@ -66,7 +67,7 @@ Topdec:
 
 int i;  // int  (TypI, "i")            fst (fun t->t , "i") TypI , snd (fun t->t , "i") 
 int *p;   // pointer to int   (TypP TypI, "p")
-int ia[10];  // array of 10 ints   (TypA (TypI, Some 10), "ia")
+int ia[10];  // array of 10 ints   (TypA (TypI, Some 10), "ia")        这里Some 10表示值为10，但可以为空
 int* ia2;  // pointer to int   (TypP TypI, "ia2")
 int *ipa[10];  // array of 10 pointers to int   (TypA (TypP TypI, Some 10), "ipa")
 int (*iap)[10];  // pointer to array of 10 int    (TypP (TypA (TypI, Some 10))
@@ -74,7 +75,7 @@ int (*iap)[10];  // pointer to array of 10 int    (TypP (TypA (TypI, Some 10))
 
 // 变量声明
 Vardec:
-    Type Vardesc                        { ((fst $2) $1, snd $2) }   //格式是：    变量类型 变量描述
+    Type Vardesc                        { ((fst $2) $1, snd $2) }   //格式是：   变量类型 变量描述
 ;
 
 /*
