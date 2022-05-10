@@ -70,6 +70,7 @@
  <!-- <MyItem Include="example\return1.c" Args ="8"/>  -->
  <!-- <MyItem Include="example\function.c" Args ="8"/>  -->
  <MyItem Include="example\function1.c" Args ="8"/> 
+ <!-- <MyItem Include="example\declare.c" Args ="8"/>  -->
 </ItemGroup>
 
 <Target Name="ccrun"> 

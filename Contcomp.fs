@@ -7,16 +7,22 @@
    jumps can be eliminated, so that tail-calls (calls immediately
    followed by return) can be recognized, dead code can be eliminated, 
    etc.
+   抽象机器代码是向后生成的，这样就可以消除跳转，从而可以识别尾部调用（紧接着
+   返回的调用），消除死代码，等等。
 
    The compilation of a block, which may contain a mixture of
    declarations and statements, proceeds in two passes:
+   块的编译可能包含声明和语句的混合，分两步进行：
 
    Pass 1: elaborate declarations to find the environment in which
            each statement must be compiled; also translate
            declarations into allocation instructions, of type
            bstmtordec.
+   第1关：详细声明，找到每个语句必须编译的环境；还可以将声明转换为bstmtordec
+   类型的分配指令。
   
    Pass 2: compile the statements in the given environments.
+   第2关：在给定的环境中编译语句。
  *)
 
 module Contcomp
@@ -25,7 +31,7 @@ open System.IO
 open Absyn
 open Machine
 
-(* The intermediate representation between passes 1 and 2 above:  *)
+(* 上述第1和第2遍之间的中间表示： *)
 
 type bstmtordec =
      | BDec of instr list                  (* Declaration of local variable  *)
@@ -33,7 +39,7 @@ type bstmtordec =
 
 (* ------------------------------------------------------------------- *)
 
-(* Code-generating functions that perform local optimizations *)
+(* 执行局部优化的代码生成函数 *)
 
 let rec addINCSP m1 C : instr list =
     match C with
@@ -106,7 +112,7 @@ let rec addCST i C =
             
 (* ------------------------------------------------------------------- *)
 
-(* Simple environment operations *)
+(* 简单的环境操作 *)
 
 type 'data Env = (string * 'data) list
 
@@ -115,24 +121,22 @@ let rec lookup env x =
     | []         -> failwith (x + " not found")
     | (y, v)::yr -> if x=y then v else lookup yr x
 
-(* A global variable has an absolute address, a local one has an offset: *)
+(* 全局变量有绝对地址，局部变量有偏移量： *)
 
 type Var = 
-    | Glovar of int                   (* absolute address in stack           *)
-    | Locvar of int                   (* address relative to bottom of frame *)
+    | Glovar of int                   (* 堆栈中的绝对地址           *)
+    | Locvar of int                   (* 相对于帧底部的地址 *)
 
-(* The variable environment keeps track of global and local variables, and 
-   keeps track of next available offset for local variables *)
+(* 变量环境跟踪全局变量和局部变量，并跟踪局部变量的下一个可用偏移量 *)
 
 type VarEnv = (Var * typ) Env * int
 
-(* The function environment maps a function name to the function's label, 
-   its return type, and its parameter declarations *)
+(* 函数环境将函数名映射到函数的标签、返回类型和参数声明 *)
 
 type Paramdecs = (typ * string) list
 type FunEnv = (label * typ option * Paramdecs) Env
 
-(* Bind declared variable in varEnv and generate code to allocate it: *)
+(* 在varEnv中绑定声明的变量并生成代码来分配它： *)
 
 let allocate (kind : int -> Var) (typ, x) (varEnv : VarEnv) : VarEnv * instr list =
     let (env, fdepth) = varEnv 
@@ -147,7 +151,7 @@ let allocate (kind : int -> Var) (typ, x) (varEnv : VarEnv) : VarEnv * instr lis
       let code = [INCSP 1]
       (newEnv, code)
 
-(* Bind declared parameter in env: *)
+(* 在env中绑定声明的参数： *)
 
 let bindParam (env, fdepth) (typ, x) : VarEnv = 
     ((x, (Locvar fdepth, typ)) :: env, fdepth+1);
@@ -157,7 +161,7 @@ let bindParams paras (env, fdepth) : VarEnv =
 
 (* ------------------------------------------------------------------- *)
 
-(* Build environments for global variables and global functions *)
+(* 为全局变量和全局函数构建环境*)
 
 let makeGlobalEnvs(topdecs : topdec list) : VarEnv * FunEnv * instr list = 
     let rec addv decs varEnv funEnv = 
@@ -181,6 +185,13 @@ let makeGlobalEnvs(topdecs : topdec list) : VarEnv * FunEnv * instr list =
    * varenv  is the local and global variable environment 
    * funEnv  is the global function environment
    * C       is the code that follows the code for stmt
+*)
+(*
+  编译micro-C语句：
+    *stmt是要编译的语句
+    *varenv是局部和全局变量环境
+    *funEnv是全球功能环境
+    *C是stmt代码后面的代码
 *)
 
 let rec cStmt stmt (varEnv : VarEnv) (funEnv : FunEnv) (C : instr list) : instr list = 
@@ -239,6 +250,16 @@ and bStmtordec stmtOrDec varEnv : bstmtordec * VarEnv =
    top and then executes C, but because of optimizations instrs may
    actually achieve this in a different way.
  *)
+(*编译micro-C表达式：
+  *e是要编译的表达式
+  *varEnv是编译时变量环境
+  *funEnv是编译时环境
+  *C是这个表达式的代码后面的代码
+
+  净效应原理：如果表达式e的编译（cExpr e varEnv funEnv C）返回指令序列INSTR，
+  则INSTR的执行将与先在堆栈顶部计算表达式e的值，然后执行C的指令序列具有相同的
+  效果，但由于优化，INSTR实际上可能以不同的方式实现这一点。
+*)
 
 and cExpr (e : expr) (varEnv : VarEnv) (funEnv : FunEnv) (C : instr list) : instr list =
     match e with
@@ -301,7 +322,7 @@ and cExpr (e : expr) (varEnv : VarEnv) (funEnv : FunEnv) (C : instr list) : inst
              :: cExpr e2 varEnv funEnv (addJump jumpend C2))
     | Call(f, es) -> callfun f es varEnv funEnv C
 
-(* Generate code to access variable, dereference pointer or index array: *)
+(* 生成代码以访问变量、解引用指针或索引数组： *)
 
 and cAccess access varEnv funEnv C = 
     match access with 
@@ -314,14 +335,14 @@ and cAccess access varEnv funEnv C =
     | AccIndex(acc, idx) ->
       cAccess acc varEnv funEnv (LDI :: cExpr idx varEnv funEnv (ADD :: C))
 
-(* Generate code to evaluate a list es of expressions: *)
+(* 生成用于计算表达式列表的代码： *)
 
 and cExprs es varEnv funEnv C = 
     match es with 
     | []     -> C
     | e1::er -> cExpr e1 varEnv funEnv (cExprs er varEnv funEnv C)
 
-(* Generate code to evaluate arguments es and then call function f: *)
+(* 生成代码来计算参数es，然后调用函数f： *)
     
 and callfun f es varEnv funEnv C : instr list =
     let (labf, tyOpt, paramdecs) = lookup funEnv f
@@ -331,7 +352,7 @@ and callfun f es varEnv funEnv C : instr list =
     else
       failwith (f + ": parameter/argument mismatch")
 
-(* Compile a complete micro-C program: globals, call to main, functions *)
+(* 编译一个完整的micro-C程序：globals、对main的调用、函数 *)
 
 let cProgram (Prog topdecs) : instr list = 
     let _ = resetLabels ()
@@ -354,9 +375,7 @@ let cProgram (Prog topdecs) : instr list =
     @ [LDARGS argc; CALL(argc, mainlab); STOP] 
     @ List.concat functions
 
-(* Compile the program (in abstract syntax) and write it to file
-   fname; also, return the program as a list of instructions.
- *)
+(* 编译程序（抽象语法）并将其写入文件fname；另外，将程序作为指令列表返回。 *)
 
 let intsToFile (inss : int list) (fname : string) = 
     File.WriteAllText(fname, String.concat " " (List.map string inss))
@@ -366,4 +385,4 @@ let contCompileToFile program fname =
     let bytecode = code2ints instrs
     intsToFile bytecode fname; instrs
 
-(* Example programs are found in the files ex1.c, ex2.c, etc *)
+(* 示例程序可在文件ex1、ex2等文件中找到 *)

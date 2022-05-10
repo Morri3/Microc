@@ -6,6 +6,9 @@ micro-C program is also a syntactically well-formed C program, and the
 intention is that the meaning of the program should be the same in
 both languages (except that micro-C is untyped and permits assignment
 to array variables, which C does not).
+Micro-C是C的一个子语言。根据设计，语法结构良好的Micro-C程序也是语法结构良好
+的C程序，其目的是程序在两种语言中的含义应该相同（除了Micro-C是非类型化的，
+并且允许分配给数组变量，而C不是）。
 
 Many simplifications have been made compared to real C:
 
@@ -13,31 +16,40 @@ Many simplifications have been made compared to real C:
      * no structs, unions, doubles, function pointers, ...
      * no initializers in variable declarations
      * functions can return only int, char, void
-
+与实际C相比，进行了许多简化：
+        *数据类型：仅int和char变量、数组和指针
+        *没有结构、并集、双精度、函数指针...
+        *变量声明中没有初始值设定项
+        *int只能返回char，void函数
 
 First attempt at a grammar
+第一次尝试语法
 --------------------------
 
 This first version of the grammar shows what we want the language to
 include.  However, it is ambiguous and will have to be rewritten for
 use in a parser specification (see below).  Some grammar rules are
 already complex enough to deserve an explanation:
+语法的第一个版本显示了我们希望语言包含的内容。然而，它是不明确的，必须重写
+才能在解析器规范中使用（见下文）。有些语法规则已经足够复杂，值得解释：
 
  * The variable description vardesc reflects the variable declaration
    syntax of C and C++, where the type specification surrounds the
    variable; unlike in Standard ML, F#, Java and C#, the type cannot
    be isolated syntactically from the variable name.
+ * 变量描述vardesc反映了C和C++的变量声明语法，其中类型规范围绕着变量；
+   与标准ML、F#、Java和C#不同，类型在语法上不能与变量名分离。
 
  * The definition of a comma-separated list (of variables or argument
    expressions) must be split into three cases:
-   
-      empty list
-      one element (and no comma)
-      more than one element (separated by commas)
+ * 逗号分隔列表（变量或参数表达式）的定义必须分为三种情况：
+      empty list    空列表
+      one element (and no comma)    一个元素（并且不是逗号）
+      more than one element (separated by commas)    多个元素（用逗号分隔）
   
    This is best achieved using two nonterminal symbols, as
    illustrated by comma-separated argument expression lists:
-
+   这最好使用两个非终结符符号来实现，如逗号分隔的参数表达式列表所示：
       exprs ::=
               <empty>
               expr1
@@ -49,12 +61,14 @@ already complex enough to deserve an explanation:
    The non-recursive nonterminal exprs distinguishes the empty case
    from the non-empty case.  The recursive nonterminal expr1
    distinguishes the one-element case from the multi-element case.
+   非递归非终结表达式区分空大小写。递归非终结符expr1区分了单元素情况和多元素情况。
 
  * We distinguish between access expressions (those that have an
    lvalue), and general expressions.  The address operator (&) can be
    applied only to access expressions.  In an array element access
    e1[e2], expression e1 must be an access expression.
-
+ * 我们区分访问表达式（具有左值的表达式）和一般表达式。地址运算符（&）只能
+   应用于access表达式。在数组元素访问e1[e2]中，表达式e1必须是访问表达式。
 
 main ::=                                program
         topdecs EOF
@@ -153,29 +167,37 @@ typ ::=
 
 
 Second attempt at a grammar, more suitable for a parser specification
+第二次尝试语法，更适合解析器规范
 ---------------------------------------------------------------------
 
 Important changes: 
-
+重要的变化：
  * We split statements into two kinds: stmtm and stmtu.  In the
    former, there are no if-statements at top-level without a matching
    else-branch.  In the latter there maybe if-statements without a
    matching else-branch.  This `dangling else' problem is discussed in
    Mogensen's book.  The implication is that
+ * 我们将语句分为两类：stmtm和stmtu。在前者中，如果没有匹配的else分支，
+   顶层就没有if语句。在后者中，可能有if语句，但没有匹配的else分支。
+   在Mogensen书中讨论了这个“悬而未决的问题”。这意味着
 
       if (e1) if (e2) s1 else s2 
 
-   is parsed the same way as 
+   is parsed the same way as
+   和下面的解析方式是相同的
 
       if (e1) { if (e2) s1 else s2 }
 
    not as
+   但不是
 
       if (e1) { if (e2) s1 } else s2 
    
  * The grammar would still be ambiguous and cause shift/reduce
    conflicts, if we did not use precedence declarations on the
    operators that can appear in an expression:
+ * 如果我们没有对表达式中可能出现的运算符使用优先级声明，语法仍然
+   是不明确的，并且会导致shift/reduce冲突：
 
        right    =             /* lowest precedence */
        nonassoc PRINT
@@ -195,37 +217,51 @@ Important changes:
    comparisons, logical or (||) binds less strongly than logical and
    (&&), the <, >, <=, >= comparisons must be non-associative, lowest
    precedence, and so on.  
+   其中大多数都是显而易见的，可以直接从C或Java教科书中学习。例如，
+   赋值运算符（=）的绑定强度必须小于所有逻辑和算术运算符，逻辑连接词的绑定强度
+   必须小于比较，逻辑or（||）的绑定强度必须小于逻辑and（&&），比较必须是
+   非关联的、优先级最低的，等等。
 
    The high precedence given to the left bracket ([) is necessary to
    avoid ambiguity and parse conflicts in expressions and variable
    declarations.  For expressions it implies that 
+   左括号（[）的高优先级是避免表达式和变量声明中的歧义和解析冲突所必需的
    
      * the parsing of  &a[2]  is  &(a[2]), not  (&a)[2] 
 
      * the parsing of  *a[2]  is  *(a[2]), not  (*a)[2]
 
      For variable declarations, it implies that 
+     对于变量声明，它意味着
    
      * the parsing of  int *a[10]  is  int *(a[10]), not  int (*a)[10]
 
    The low precedence given to PRINT is necessary to avoid ambiguity
    and parse conflicts in expressions with two-argument operators.
    It implies that 
+   在使用两个参数运算符的表达式中，为避免歧义和解析冲突，必须为PRINT指定较低
+   的优先级。这意味着
 
      * the parsing of  print 2 + 5  is  print (2 + 5), not (print 2) + 5
 
    By introducing extra nonterminals and grammar rules, one can live
    without the precedence declarations.  Mogensen's book describes how
    to do that too.
+   通过引入额外的非终结符和语法规则，人们可以不用优先级声明。Mogensen的书也描述
+   了如何做到这一点。
 
  * Including access expressions into general expressions leads to
    ambiguity and conflicts.  We add a new nonterminal exprnotaccess to
    explicitly represent non-access expressions.
+ * 将访问表达式包含到一般表达式中会导致歧义和冲突。我们添加了一个新的非终端
+   exprnotaccess来显式表示非访问表达式。
 
  * For non-access expressions, we distinguish atomic expressions (a
    variable, a constant, or an expression within parentheses) from
    non-atomic ones.  This avoids ambiguity in pointer dereferencing
    expressions, so that
+ * 对于非访问表达式，我们区分原子表达式（变量、常量 或 括号内的表达式）和
+   非原子表达式。这避免了指针解引用表达式中的歧义，因此
 
      * the parsing of  *x*2  is  (*x)*2, not  *(x*2)
 
@@ -343,11 +379,13 @@ type ::=
 
 
 Lexical matters: tokens and comments
+词汇问题：标记和注释
 ------------------------------------
 
 NAME:       [`a`-`z``A`-`Z`][`a`-`z``A`-`Z``0`-`9`]*
 
             except for the keywords, which are:
+            除了关键字，它们是：
 
             char else false if int null print println return true void while
 
@@ -362,7 +400,10 @@ OP:         + - * / % = == != < > <= >= && ||
 
 
 There are two kinds of comments (not inside strings, not nested):
+有两种注释（不在字符串内，也不嵌套）：
 
         // comment extends to end of line
+           注释延伸到行尾
 
         /* ... */ delimited comment
+                  分隔注释

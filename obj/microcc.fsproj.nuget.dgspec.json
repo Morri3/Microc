@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "D:\\bianyi\\bighomework\\microc\\microcc.fsproj": {}
+    "D:\\bianyi\\bighomework\\Microc\\microcc.fsproj": {}
   },
   "projects": {
-    "D:\\bianyi\\bighomework\\microc\\microcc.fsproj": {
+    "D:\\bianyi\\bighomework\\Microc\\microcc.fsproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "D:\\bianyi\\bighomework\\microc\\microcc.fsproj",
+        "projectUniqueName": "D:\\bianyi\\bighomework\\Microc\\microcc.fsproj",
         "projectName": "microcc",
-        "projectPath": "D:\\bianyi\\bighomework\\microc\\microcc.fsproj",
+        "projectPath": "D:\\bianyi\\bighomework\\Microc\\microcc.fsproj",
         "packagesPath": "C:\\Users\\82444\\.nuget\\packages\\",
-        "outputPath": "D:\\bianyi\\bighomework\\microc\\obj\\",
+        "outputPath": "D:\\bianyi\\bighomework\\Microc\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "C:\\Users\\82444\\AppData\\Roaming\\NuGet\\NuGet.Config"

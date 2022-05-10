@@ -1,4 +1,4 @@
-# microc工程文件说明2022/04/28
+# microc工程文件说明2022/05/10
 
 [TOC]
 
@@ -190,17 +190,19 @@ dotnet run --project microcc.fsproj example/ex11.c    # 执行编译器
 ./bin/Debug/net6.0/microcc.exe example/ex11.c  # 直接执行
 ```
 
-#### ##C.2 在dotnet fsi运行backwards编译器【❌未验证】
+#### ##C.2 在dotnet fsi运行backwards编译器
 
 ```sh
 dotnet fsi
 
 #r "nuget: FsLexYacc";;
 
-#load "Absyn.fs" "CPar.fs" "CLex.fs" "Debug.fs" "Parse.fs" "Machine.fs" "Backend.fs" "Contcomp.fs" "ParseAndComp.fs";;
+#load "Absyn.fs"  "CPar.fs" "CLex.fs" "Debug.fs" "Parse.fs" "Machine.fs" "Backend.fs" "Contcomp.fs" "ParseAndContcomp.fs";;
 
 open ParseAndContcomp;;
-contCompileToFile (fromFile "example\ex11.c") "ex11.out";;
+
+fromFile "example\ex1.c";;
+contCompileToFile (fromFile "example\ex1.c") "ex1.out";;
 #q;;
 ```
 
@@ -389,6 +391,8 @@ $sudo apt-get install build-essential nasm gcc
 https://www.nasm.us/pub/nasm/releasebuilds/2.15.05/win64/
 # gcc 编译器
 https://jmeubank.github.io/tdm-gcc/download/
+
+w10 在 9.2.0 版本测试通过
 ```
 
 #### 步骤
@@ -435,7 +439,7 @@ dotnet  build -t:ccrunx86 microc.fsproj
 - 如数组 a[2] 的元素按次序排在栈上，末尾保存数组变量a，内容是首元素 e0的地址
 - e0, e1, a  
 
-访问数组，先通过`BP`得到`a`的位置，然后通过`a` 得到首地址 e0，最后计算数组下标偏移地址，访问对应数组元素
+​		访问数组，先通过`BP`得到`a`的位置，然后通过`a` 得到首地址 e0，最后计算数组下标偏移地址，访问对应数组元素
 
 - 全局变量在栈上依次保存，x86 汇编中，glovar 是全局变量的起始地址
 
@@ -447,3 +451,5 @@ dotnet  build -t:ccrunx86 microc.fsproj
 
 默认任务`build & run`
 - Ctrl+Shift+B
+
+  
