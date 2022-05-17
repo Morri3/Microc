@@ -1,4 +1,4 @@
-# microc工程文件说明2022/05/10
+# microc工程文件说明2022/05/17
 
 [TOC]
 
@@ -116,6 +116,13 @@ dotnet run --project microc.fsproj -g example/ex1.c  #-g查看调试信息
 
 ./bin/Debug/net6.0/microc.exe -g example/ex1.c #直接执行构建的.exe文件，效果同上
 #第6、8、11行执行后会生成example/ex1.ins、example/ex1.insx86、example/ex1.asm、example/ex1.out
+```
+
+#### ##查看.ins和.out文件内容
+
+```sh
+cat example/ex3.ins    #以ex3为例
+cat example/ex3.out    #以ex3为例
 ```
 
 #### ##运行microc.fsproj
@@ -339,18 +346,22 @@ contCompileToFile (fromFile "example\ex11.c") "ex11.out";;
 
 ### D 虚拟机构建与运行
 
+虚拟机有 `c#` `c` `java` 三个版本
+
 - 运行下面的命令 查看 fac 0 , fac 3 的栈帧
 - 理解栈式虚拟机执行流程
 
-#### D.1 dotnet
+执行前，先在B中 编译出 *.out 虚拟机指令文件
+
+#### D.1 c#
 
 ```sh
-dotnet clean  machine.csproj
-dotnet run --project machine.csproj ex9.out 3 # 运行虚拟机，执行 ex9.out 
+dotnet clean machine.csproj
+dotnet build machine.csproj   #构建虚拟机 machine.exe 
 
-./bin/Debug/net6.0/machine.exe ex9.out 3
-./bin/Debug/net6.0/machine.exe -t ex9.out 0  // 运行虚拟机，执行 ex9.out ，-t 查看跟踪信息
-./bin/Debug/net6.0/machine.exe -t ex9.out 3  // 运行虚拟机，执行 ex9.out ，-t 查看跟踪信息
+./bin/Debug/net6.0/machine.exe .examlple/ex9.out 3
+./bin/Debug/net6.0/machine.exe -t .examlple/ex9.out 0  // 运行虚拟机，执行 ex9.out ，-t 查看跟踪信息
+./bin/Debug/net6.0/machine.exe -t .examlple/ex9.out 3  // 运行虚拟机，执行 ex9.out ，-t 查看跟踪信息
 ```
 
 #### D.2 C
@@ -450,6 +461,7 @@ dotnet  build -t:ccrunx86 microc.fsproj
 #### tasks.json
 
 默认任务`build & run`
+
 - Ctrl+Shift+B
 
   

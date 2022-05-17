@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "D:\\bianyi\\bighomework\\microc\\interpc.fsproj": {}
+    "D:\\bianyi\\bigwork\\Microc\\interpc.fsproj": {}
   },
   "projects": {
-    "D:\\bianyi\\bighomework\\microc\\interpc.fsproj": {
+    "D:\\bianyi\\bigwork\\Microc\\interpc.fsproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "D:\\bianyi\\bighomework\\microc\\interpc.fsproj",
+        "projectUniqueName": "D:\\bianyi\\bigwork\\Microc\\interpc.fsproj",
         "projectName": "interpc",
-        "projectPath": "D:\\bianyi\\bighomework\\microc\\interpc.fsproj",
+        "projectPath": "D:\\bianyi\\bigwork\\Microc\\interpc.fsproj",
         "packagesPath": "C:\\Users\\82444\\.nuget\\packages\\",
-        "outputPath": "D:\\bianyi\\bighomework\\microc\\obj\\",
+        "outputPath": "D:\\bianyi\\bigwork\\Microc\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "C:\\Users\\82444\\AppData\\Roaming\\NuGet\\NuGet.Config"
@@ -60,7 +60,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\6.0.202\\RuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\6.0.203\\RuntimeIdentifierGraph.json"
         }
       }
     }

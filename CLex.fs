@@ -17,7 +17,7 @@ let lexemeAsString lexbuf =
 (* 将关键字扫描为标识符，并使用此功能区分它们。 *)
 (* 如果关键字集很大，请使用哈希表。 *)
 // keyword 处理关键字与标识符的辅助函数
-let keyword s =   
+let keyword s = 
     match s with
     | "char"    -> CHAR    // 返回对应的Token ,Token 定义于 CPar.fsl 文件中
     | "else"    -> ELSE
