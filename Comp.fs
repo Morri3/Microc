@@ -4,30 +4,19 @@
    optimization of jumps to jumps, tail-calls etc.
    sestoft@itu.dk * 2009-09-23, 2011-11-10
 
-   A value is an integer; it may represent an integer or a pointer,
-   where a pointer is just an address in the store (of a variable or
-   pointer or the base address of an array).
+   值是整数；它可以表示整数或指针，其中指针只是存储区中的地址（变量或指针或数组的基址）。
 
-   The compile-time environment maps a global variable to a fixed
-   store address, and maps a local variable to an offset into the
-   current stack frame, relative to its bottom.  The run-time store
-   maps a location to an integer.  This freely permits pointer
-   arithmetics, as in real C.  A compile-time function environment
-   maps a function name to a code label.  In the generated code,
-   labels are replaced by absolute code addresses.
+   编译时环境将全局变量映射到固定的存储地址，并将局部变量映射到当前堆栈帧相对于其底部的
+   偏移量。运行时存储将位置映射为整数。这可以自由地使用指针算法，就像在real C中一样。
+   编译时函数环境将函数名映射到代码标签。在生成的代码中，标签被绝对代码地址替换。
 
-   Expressions can have side effects.  A function takes a list of
-   typed arguments and may optionally return a result.
+   表达式可能有副作用。函数接受类型化参数的列表，并可以选择返回结果。
 
-   Arrays can be one-dimensional and constant-size only.  For
-   simplicity, we represent an array as a variable which holds the
-   address of the first array element.  This is consistent with the
-   way array-type parameters are handled in C, but not with the way
-   array-type variables are handled.  Actually, this was how B (the
-   predecessor of C) represented array variables.
+   数组只能是一维且大小不变的。为简单起见，我们将数组表示为一个变量，该变量保存第一个
+   数组元素的地址。这与C中处理数组类型参数的方式一致，但与处理数组类型变量的方式不一致。
+   实际上，这就是B（C的前身）表示数组变量的方式。
 
-   The store behaves as a stack, so all data except global variables
-   are stack allocated: variables, function parameters and arrays.
+   存储行为类似于堆栈，因此除了全局变量之外的所有数据都是堆栈分配的：变量、函数参数和数组。
 *)
 
 module Comp
@@ -40,7 +29,7 @@ open Backend
 
 (* ------------------------------------------------------------------- *)
 
-(* Simple environment operations *)
+(* 简单的环境操作 *)
 
 type 'data Env = (string * 'data) list
 
@@ -49,14 +38,13 @@ let rec lookup env x =
     | [] -> failwith (x + " not found")
     | (y, v) :: yr -> if x = y then v else lookup yr x
 
-(* A global variable has an absolute address, a local one has an offset: *)
+(* 全局变量具有绝对地址，局部变量具有偏移量： *)
 
 type Var =
-    | Glovar of int (* absolute address in stack           *)
-    | Locvar of int (* address relative to bottom of frame *)
+    | Glovar of int (* 堆栈中的绝对地址           *)
+    | Locvar of int (* 相对于frame底部的地址 *)
 
-(* The variable environment keeps track of global and local variables, and
-   keeps track of next available offset for local variables 
+(* 变量环境跟踪全局和局部变量，并跟踪局部变量的下一个可用偏移量 
    
 ex1.c下面的的全局声明
 
@@ -76,7 +64,7 @@ h 是整型数组，长度为 3，g是整数，下一个空闲位置是 5
 
 type VarEnv = (Var * typ) Env * int
 
-(* The function environment maps function name to label and parameter decs *)
+(* 函数环境将函数名映射到标签和参数decs *)
 
 type Paramdecs = (typ * string) list
 
@@ -84,7 +72,7 @@ type FunEnv = (label * typ option * Paramdecs) Env
 
 let isX86Instr = ref false
 
-(* Bind declared variable in env and generate code to allocate it: *)
+(* 在env中绑定声明的变量并生成代码来分配它： *)
 // kind : Glovar / Locvar
 let rec allocateWithMsg (kind: int -> Var) (typ, x) (varEnv: VarEnv) =
     let varEnv, instrs =
@@ -123,7 +111,7 @@ and allocate (kind: int -> Var) (typ, x) (varEnv: VarEnv) : VarEnv * instr list 
         
         (newEnv, code)
 
-(* Bind declared parameters in env: *)
+(* 在env中绑定声明的参数： *)
 
 let bindParam (env, newloc) (typ, x) : VarEnv =
     ((x, (Locvar newloc, typ)) :: env, newloc + 1)
@@ -132,7 +120,7 @@ let bindParams paras ((env, newloc): VarEnv) : VarEnv = List.fold bindParam (env
 
 (* ------------------------------------------------------------------- *)
 
-(* Build environments for global variables and functions *)
+(* 为全局变量和函数构建环境 *)
 
 let makeGlobalEnvs (topdecs: topdec list) : VarEnv * FunEnv * instr list =
     let rec addv decs varEnv funEnv =
@@ -163,12 +151,12 @@ let x86patch code =
         code 
 (* ------------------------------------------------------------------- *)
 
-(* Compiling micro-C statements:
-   * stmt    is the statement to compile
-   * varenv  is the local and global variable environment
-   * funEnv  is the global function environment
+(* 编译micro-C语句:
+   * stmt    是要编译的语句
+   * varenv  是局部变量环境和全局变量环境
+   * funEnv  是全局函数环境
 *)
-
+//编译语句
 let rec cStmt stmt (varEnv: VarEnv) (funEnv: FunEnv) : instr list =
     match stmt with
     | If (e, stmt1, stmt2) ->
@@ -212,18 +200,17 @@ and cStmtOrDec stmtOrDec (varEnv: VarEnv) (funEnv: FunEnv) : VarEnv * instr list
     | Stmt stmt -> (varEnv, cStmt stmt varEnv funEnv)
     | Dec (typ, x) -> allocateWithMsg Locvar (typ, x) varEnv
 
-(* Compiling micro-C expressions:
+(* 编译micro-C表达式:
 
-   * e       is the expression to compile
-   * varEnv  is the local and gloval variable environment
-   * funEnv  is the global function environment
+   * e       是要编译的表达式
+   * varEnv  是局部变量环境和全局变量环境
+   * funEnv  是全局函数环境
 
-   Net effect principle: if the compilation (cExpr e varEnv funEnv) of
-   expression e returns the instruction sequence instrs, then the
-   execution of instrs will leave the rvalue of expression e on the
-   stack top (and thus extend the current stack frame with one element).
+   净效应原理：如果表达式e的编译（cExpr e varEnv funEnv）返回
+   指令序列instrs，则instrs的执行将使表达式e的右值留在堆栈顶部
+   （从而用一个元素扩展当前堆栈帧).
 *)
-
+//编译右值表达式
 and cExpr (e: expr) (varEnv: VarEnv) (funEnv: FunEnv) : instr list =
     match e with
     | Access acc -> cAccess acc varEnv funEnv @ [ LDI ]
@@ -255,6 +242,20 @@ and cExpr (e: expr) (varEnv: VarEnv) (funEnv: FunEnv) : instr list =
              | ">" -> [ SWAP; LT ]
              | "<=" -> [ SWAP; LT; NOT ]
              | _ -> raise (Failure "unknown primitive 2"))
+    | PreInc acc -> cAccess acc varEnv funEnv @ [ DUP; LDI; CSTI 1; ADD; STI ]//前置自增
+                                                        //先编译左值表达式acc
+                                                        //DUP:
+                                                        //LDI:将 栈帧上 某位置的值入栈
+                                                        //CSTI:int类型变量
+                                                        //ADD:值相加
+                                                        //STI:将 值 写入栈上某个位置
+    | PreDec acc -> cAccess acc varEnv funEnv @ [ DUP; LDI; CSTI 1; SUB; STI ]//前置自减
+                                                        //先编译左值表达式acc
+                                                        //DUP:
+                                                        //LDI:将 栈帧上 某位置的值入栈
+                                                        //CSTI:int类型变量
+                                                        //SUB:值相减
+                                                        //STI:将 值 写入栈上某个位置
     | Andalso (e1, e2) ->
         let labend = newLabel ()
         let labfalse = newLabel ()
@@ -279,9 +280,8 @@ and cExpr (e: expr) (varEnv: VarEnv) (funEnv: FunEnv) : instr list =
                 Label labend ]
     | Call (f, es) -> callfun f es varEnv funEnv
 
-(* Generate code to access variable, dereference pointer or index array.
-   The effect of the compiled code is to leave an lvalue on the stack.   *)
-
+(* 生成代码以访问变量、解引用指针或索引数组。编译代码的效果是在堆栈上留下一个左值。 *)
+//编译左值表达式
 and cAccess access varEnv funEnv : instr list =
     match access with
     | AccVar x ->
@@ -307,12 +307,12 @@ and cAccess access varEnv funEnv : instr list =
         @ [ LDI ]
           @ x86patch (cExpr idx varEnv funEnv) @ [ ADD ]
 
-(* Generate code to evaluate a list es of expressions: *)
+(* 生成代码以计算表达式列表： *)
 
 and cExprs es varEnv funEnv : instr list =
     List.concat (List.map (fun e -> cExpr e varEnv funEnv) es)
 
-(* Generate code to evaluate arguments es and then call function f: *)
+(* 生成代码以计算参数es，然后调用函数f： *)
 
 and callfun f es varEnv funEnv : instr list =
     let (labf, tyOpt, paramdecs) = lookup funEnv f
@@ -324,7 +324,7 @@ and callfun f es varEnv funEnv : instr list =
         raise (Failure(f + ": parameter/argument mismatch"))
 
 
-(* Compile a complete micro-C program: globals, call to main, functions *)
+(* 编译一个完整的micro-C程序：globals、main调用、函数 *)
 let argc = ref 0
 
 let cProgram (Prog topdecs) : instr list =
@@ -356,8 +356,8 @@ let cProgram (Prog topdecs) : instr list =
         STOP ]
       @ List.concat functions
 
-(* Compile a complete micro-C and write the resulting instruction list
-   to file fname; also, return the program as a list of instructions.
+(* 编译一个完整的micro-C，并将生成的指令列表写入fname文件；另外，将程序
+   作为指令列表返回。
  *)
 
 let intsToFile (inss: int list) (fname: string) =

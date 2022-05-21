@@ -230,9 +230,9 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "D:\\bianyi\\bigwork\\Microc\\microc.fsproj",
-      "projectName": "microc",
-      "projectPath": "D:\\bianyi\\bigwork\\Microc\\microc.fsproj",
+      "projectUniqueName": "D:\\bianyi\\bigwork\\Microc\\interpc.fsproj",
+      "projectName": "interpc",
+      "projectPath": "D:\\bianyi\\bigwork\\Microc\\interpc.fsproj",
       "packagesPath": "C:\\Users\\82444\\.nuget\\packages\\",
       "outputPath": "D:\\bianyi\\bigwork\\Microc\\obj\\",
       "projectStyle": "PackageReference",

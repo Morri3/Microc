@@ -1,8 +1,208 @@
-# microc工程文件说明2022/05/17
+# microc工程文件说明2022/05/20
 
 [TOC]
 
-## 一、项目组成⭐
+## 一、解释
+
+1、解释器
+
+（1）Absyn.fs定义抽象语法：
+加内容
+
+（2）CPar.fsy定义token关键字和关键字的使用方法：
+
+```
+  //非左值的情况
+ExprNotAccess:
+    AtExprNotAccess                     { $1                  } //不可以为左值的的基本情况
+  | Access ASSIGN Expr                  { Assign($1, $3)      } // $1表示左值
+  | NAME LPAR Exprs RPAR                { Call($1, $3)        } // 变量名(表达式)
+  | NOT Expr                            { Prim1("!", $2)      } // !表达式       表达式取反
+  | PRINT Expr                          { Prim1("printi", $2) } // 打印表达式
+  | PRINTLN                             { Prim1("printc", nl) } // 打印换行
+  | Expr PLUS  Expr                     { Prim2("+",  $1, $3) } // 表达式+表达式
+  | Expr MINUS Expr                     { Prim2("-",  $1, $3) } // 表达式-表达式
+  | Expr TIMES Expr                     { Prim2("*",  $1, $3) } // 表达式*表达式
+  | Expr DIV   Expr                     { Prim2("/",  $1, $3) } // 表达式/表达式
+  | Expr MOD   Expr                     { Prim2("%",  $1, $3) } // 表达式%表达式
+  | Expr EQ    Expr                     { Prim2("==", $1, $3) } // 表达式==表达式
+  | Expr NE    Expr                     { Prim2("!=", $1, $3) } // 表达式!=表达式
+  | Expr GT    Expr                     { Prim2(">",  $1, $3) } // 表达式>表达式
+  | Expr LT    Expr                     { Prim2("<",  $1, $3) } // 表达式<表达式
+  | Expr GE    Expr                     { Prim2(">=", $1, $3) } // 表达式>=表达式
+  | Expr LE    Expr                     { Prim2("<=", $1, $3) } // 表达式<=表达式
+  | Expr SEQAND Expr                    { Andalso($1, $3)     } // 表达式&&表达式
+  | Expr SEQOR  Expr                    { Orelse($1, $3)      } // 表达式||表达式
+;
+```
+
+CPar加关键字和它的用法
+
+（3）CLex.fsl把关键字扫描为标识符
+
+添加关键字
+
+（4）Interp.fs：
+
+添加相应的实现
+
+```
+and eval e locEnv gloEnv store : int * store =
+    match e with
+    | Access acc -> //左值
+        let (loc, store1) = access acc locEnv gloEnv store
+        (getSto store1 loc, store1)
+    | Assign (acc, e) -> //赋值
+        let (loc, store1) = access acc locEnv gloEnv store
+        let (res, store2) = eval e locEnv gloEnv store1
+        (res, setSto store2 loc res)
+    | CstI i -> (i, store) //int类型变量
+    | Addr acc -> access acc locEnv gloEnv store //取地址
+    | Prim1 (ope, e1) -> //一元基本算子
+        let (i1, store1) = eval e1 locEnv gloEnv store
+
+        let res =
+            match ope with
+            | "!" -> if i1 = 0 then 1 else 0 //取反
+            | "printi" ->
+                (printf "%d " i1
+                 i1)
+            | "printc" ->
+                (printf "%c" (char i1)
+                 i1)
+            | _ -> failwith ("unknown primitive " + ope)
+
+        (res, store1)
+```
+
+这里面Addr、Prim1的顺序对应Asbyn中定义的抽象语法。
+
+然后Prim1里面的内容对应CPar.fsy中的：
+
+```
+  //非左值的情况
+ExprNotAccess:
+    AtExprNotAccess                     { $1                  } //不可以为左值的的基本情况
+  | Access ASSIGN Expr                  { Assign($1, $3)      } // $1表示左值
+  | NAME LPAR Exprs RPAR                { Call($1, $3)        } // 变量名(表达式)
+  | NOT Expr                            { Prim1("!", $2)      } // !表达式       表达式取反
+  | PRINT Expr                          { Prim1("printi", $2) } // 打印表达式
+  | PRINTLN                             { Prim1("printc", nl) } // 打印换行
+  | Expr PLUS  Expr                     { Prim2("+",  $1, $3) } // 表达式+表达式
+  | Expr MINUS Expr                     { Prim2("-",  $1, $3) } // 表达式-表达式
+  | Expr TIMES Expr                     { Prim2("*",  $1, $3) } // 表达式*表达式
+  | Expr DIV   Expr                     { Prim2("/",  $1, $3) } // 表达式/表达式
+  | Expr MOD   Expr                     { Prim2("%",  $1, $3) } // 表达式%表达式
+  | Expr EQ    Expr                     { Prim2("==", $1, $3) } // 表达式==表达式
+  | Expr NE    Expr                     { Prim2("!=", $1, $3) } // 表达式!=表达式
+  | Expr GT    Expr                     { Prim2(">",  $1, $3) } // 表达式>表达式
+  | Expr LT    Expr                     { Prim2("<",  $1, $3) } // 表达式<表达式
+  | Expr GE    Expr                     { Prim2(">=", $1, $3) } // 表达式>=表达式
+  | Expr LE    Expr                     { Prim2("<=", $1, $3) } // 表达式<=表达式
+  | Expr SEQAND Expr                    { Andalso($1, $3)     } // 表达式&&表达式
+  | Expr SEQOR  Expr                    { Orelse($1, $3)      } // 表达式||表达式
+;
+```
+
+右边有几个Prim1，Interp.fs中就有几个Prim1.
+
+右边的Prim2("<",  $1, $3)   ＜ 1 3这三个顺序和Interp.fs中Prim2 (ope, e1, e2)顺序是一样的。
+
+
+
+2、编译器
+
+（1）Absyn.fs定义抽象语法
+
+（2）Machine.c
+
+```
+// 汇编指令
+type instr =
+  | Label of label                     (* symbolic label; pseudo-instruc. *)
+  | FLabel of int * label                     (* symbolic label; pseudo-instruc. *)
+  | CSTI of int                        (* constant                        *)
+  | OFFSET of int                      (* constant     偏移地址  x86      *) 
+  | GVAR of int                        (* global var     全局变量  x86    *) 
+  | ADD                                (* addition                        *)
+  | SUB                                (* subtraction                     *)
+  | MUL                                (* multiplication                  *)
+  | DIV                                (* division                        *)
+  | MOD                                (* modulus                         *)
+  | EQ                                 (* equality: s[sp-1] == s[sp]      *)
+  //......
+```
+
+存放汇编指令
+
+（3）Comp.fs
+
+```
+let rec cStmt stmt (varEnv: VarEnv) (funEnv: FunEnv) : instr list =
+    match stmt with
+    | If (e, stmt1, stmt2) ->
+        let labelse = newLabel ()
+        let labend = newLabel ()
+
+        cExpr e varEnv funEnv
+        @ [ IFZERO labelse ]
+          @ cStmt stmt1 varEnv funEnv
+            @ [ GOTO labend ]
+              @ [ Label labelse ]
+                @ cStmt stmt2 varEnv funEnv @ [ Label labend ]
+    | While (e, body) ->
+        let labbegin = newLabel ()
+        let labtest = newLabel ()
+
+        [ GOTO labtest; Label labbegin ]
+        @ cStmt body varEnv funEnv
+          @ [ Label labtest ]
+            @ cExpr e varEnv funEnv @ [ IFNZRO labbegin ]
+```
+
+用到汇编指令
+
+
+
+## 二、添加功能的步骤⭐⭐⭐⭐按功能写（一个功能修改编译器+解释器）
+
+##### **1、解释器**
+
+（1）Absyn.fs
+
+添加定义的抽象语法
+
+（2）CPar.fsy
+
+加关键字和它的用法
+
+（3）CLex.fsl
+
+添加关键字
+
+（4）Interp.fs
+
+添加相应的实现
+
+
+
+##### **2、编译器**
+
+（1）Absyn.fs定义抽象语法
+
+加内容
+
+（2）Machine.c
+
+添加或使用相应的汇编指令
+
+（3）Comp.fs
+
+添加相应的实现
+
+
+
+## 三、项目组成⭐
 
 ### interpreter  解释器
 
@@ -43,7 +243,7 @@ microcc.fsproj                    优化编译器项目文件
 
 
 
-## 二、项目运行顺序⭐⭐⭐
+## 四、项目运行顺序⭐⭐⭐
 
 ### ###解释器
 
@@ -162,7 +362,6 @@ compileToFile (fromFile "example/ex4.c") "ex4";;     # 观察变量在环境上�
 # 可参考A.中命令，比较 解释执行 与 编译执行 ex11.c的速度
 time "on";;  # 打开时间跟踪【在fsi中运行】
 #这里分别运行解释执行和编译执行的命令
-
 ```
 
 #### ##D.3 Java虚拟机
@@ -215,7 +414,7 @@ contCompileToFile (fromFile "example\ex1.c") "ex1.out";;
 
 
 
-## 三、构建与执行
+## 五、构建与执行
 
 ### A 解释器
 

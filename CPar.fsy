@@ -18,25 +18,26 @@ let nl = CstI 10 //  10是\n的ASCII码
 %}
 
 //%token是词元说明符
-%token <int> CSTINT CSTBOOL           // <int> 是词元的语义值类型
+%token <int> CSTINT CSTBOOL           // <int> 是词元的语义值类型，布尔类型的值是0 1，故用int类型表示
 %token <string> CSTSTRING NAME        // CSTSTRING、NAME都是string类型
 
 %token CHAR ELSE IF INT NULL PRINT PRINTLN RETURN VOID WHILE
-%token PLUS MINUS TIMES DIV MOD
-%token EQ NE GT LT GE LE
-%token NOT SEQOR SEQAND
+%token PLUS MINUS TIMES DIV MOD       //加 减 乘 除 取余
+%token PREINC PREDEC           //前置自增 前置自减
+%token EQ NE GT LT GE LE          //相等 不相等 大于 小于 大于等于 小于等于
+%token NOT SEQOR SEQAND       //! || &&
 %token LPAR RPAR LBRACE RBRACE LBRACK RBRACK SEMI COMMA ASSIGN AMP
 %token EOF
 
 %right ASSIGN             /* 最低优先级 */  // 最下面的优先级最高
 %nonassoc PRINT           //打印
-%left SEQOR               //逻辑或
-%left SEQAND              //逻辑与
+%left SEQOR               //逻辑或||
+%left SEQAND              //逻辑与&&
 %left EQ NE               //== !=
 %nonassoc GT LT GE LE     //大于 小于 大于等于 小于等于
 %left PLUS MINUS          //加 减
 %left TIMES DIV MOD       //乘 除 取余
-%nonassoc NOT AMP         //!取反 &按位与
+%nonassoc NOT AMP PREINC PREDEC         //!取反 &取地址 前置自增 前置自减
 %nonassoc LBRACK          /* 最高优先级  */  //左括号
 
 %start Main               // 语法开始符号
@@ -170,6 +171,8 @@ ExprNotAccess:
   | NOT Expr                            { Prim1("!", $2)      } // !表达式       表达式取反
   | PRINT Expr                          { Prim1("printi", $2) } // 打印表达式
   | PRINTLN                             { Prim1("printc", nl) } // 打印换行
+  | PREINC Access                       { PreInc $2      }  // 前置自增++a
+  | PREDEC Access                       { PreDec $2      }  // 前置自减--a
   | Expr PLUS  Expr                     { Prim2("+",  $1, $3) } // 表达式+表达式
   | Expr MINUS Expr                     { Prim2("-",  $1, $3) } // 表达式-表达式
   | Expr TIMES Expr                     { Prim2("*",  $1, $3) } // 表达式*表达式

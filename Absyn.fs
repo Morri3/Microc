@@ -11,8 +11,8 @@ module Absyn
 // 基本类型
 // 注意，数组、指针是递归类型
 // 这里没有函数类型，注意与上次课的 MicroML 对比
-// 变量出现在赋值表达式的左边 ---> 左值
-// 变量出现在赋值表达式的右边 ---> 右值
+//    变量出现在赋值表达式的左边 ---> 左值
+//    变量出现在赋值表达式的右边 ---> 右值
 type typ =                           // 类型
   | TypI                             (* Type int                    *) //int类型
   | TypC                             (* Type char                   *) //char类型
@@ -29,6 +29,8 @@ and expr =                           // 表达式，右值
   | Andalso of expr * expr           (* Sequential and              *) //与
   | Orelse of expr * expr            (* Sequential or               *) //或
   | Call of string * expr list       (* Function call f(...)        *) //函数调用
+  | PreInc of access                                           //自增 ++i or ++a[e]
+  | PreDec of access                                           //自减 --i or --a[e]
                                                                    
 and access =                         //左值，存储的位置                                            
   | AccVar of string                 (* Variable access        x    *) //变量

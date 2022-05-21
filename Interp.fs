@@ -185,6 +185,9 @@ let rec bindVars xs vs locEnv store : locEnv * store =
     res
 
 (* 分配变量（int、指针或数组）：扩展环境，使其将变量映射到下一个可用的存储位置，并初始化存储位置 *)
+//输入: (类型, 变量名)
+//输出: 绑定了变量名的环境，和分配了空间的store
+//  allocate : typ * string -> locEnv -> store -> locEnv * store
 let rec allocate (typ, x) (env0, nextloc) sto0 : locEnv * store =
 
     let (nextloc1, v, sto1) =
@@ -226,6 +229,7 @@ let initEnvAndStore (topdecs: topdec list) : locEnv * funEnv * store =
 (* 解释micro-C语句 *)
 //传入的参数是：语句，局部环境，全局环境，store
 //返回的是store
+//  exec : stmt -> locEnv -> gloEnv -> store -> store
 let rec exec stmt (locEnv: locEnv) (gloEnv: gloEnv) (store: store) : store =
     match stmt with
     | If (e, stmt1, stmt2) ->   //if语句
@@ -274,23 +278,29 @@ and stmtordec stmtordec locEnv gloEnv store =
     | Dec (typ, x) -> allocate (typ, x) locEnv store
 
 (* 计算micro-C表达式 *)
-
+//输入: 表达式 expr
+//输出: 表达式 expr的值(这个值是int类型)，和，被修改的store
+//  eval : expr -> locEnv -> gloEnv -> store -> int * store
 and eval e locEnv gloEnv store : int * store =
     match e with
     | Access acc -> //左值
-        let (loc, store1) = access acc locEnv gloEnv store
-        (getSto store1 loc, store1)
+        let (loc, store1) = access acc locEnv gloEnv store //取要求的acc的地址和环境
+                                                                        //这里loc就是得到的acc地址（int类型）
+                                                                        //这里store1就是acc的环境
+        (getSto store1 loc, store1) //返回的是一个元组，左边是在得到的环境store1中根据
+                                                  //acc地址loc找到该地址上的值，右边是环境
     | Assign (acc, e) -> //赋值
-        let (loc, store1) = access acc locEnv gloEnv store
-        let (res, store2) = eval e locEnv gloEnv store1
-        (res, setSto store2 loc res)
+        let (loc, store1) = access acc locEnv gloEnv store //取要求的acc的地址和环境
+        let (res, store2) = eval e locEnv gloEnv store1 //计算表达式e的值，并得到环境
+        (res, setSto store2 loc res) //上一行得到的表达式e的值作为元组左边，把该值赋值给acc的地址
+                                                   //并设置到store中
     | CstI i -> (i, store) //int类型变量
-    | Addr acc -> access acc locEnv gloEnv store //取地址
+    | Addr acc -> access acc locEnv gloEnv store //取要求的acc的地址
     | Prim1 (ope, e1) -> //一元基本算子
-        let (i1, store1) = eval e1 locEnv gloEnv store
+        let (i1, store1) = eval e1 locEnv gloEnv store //计算表达式e1的值，并得到环境 
 
         let res =
-            match ope with
+            match ope with //模式匹配
             | "!" -> if i1 = 0 then 1 else 0 //取反
             | "printi" ->
                 (printf "%d " i1
@@ -300,7 +310,7 @@ and eval e locEnv gloEnv store : int * store =
                  i1)
             | _ -> failwith ("unknown primitive " + ope)
 
-        (res, store1)
+        (res, store1) //返回模式匹配计算到的值和存储
     | Prim2 (ope, e1, e2) -> //二元基本算子
         let (i1, store1) = eval e1 locEnv gloEnv store //第一个参数的store
         let (i2, store2) = eval e2 locEnv gloEnv store1 //第二个参数的store
@@ -321,31 +331,42 @@ and eval e locEnv gloEnv store : int * store =
             | _ -> failwith ("unknown primitive " + ope)
 
         (res, store2)
-    | Andalso (e1, e2) -> //&&
-        let (i1, store1) as res = eval e1 locEnv gloEnv store
+    | PreInc acc -> //前置自增
+        let (loc, store1) as res = access acc locEnv gloEnv store //取要求的acc的地址和环境
+        let res = getSto store1 loc //得到要求的这个acc在store1的loc位置上的值
+        (res + 1, setSto store1 loc (res + 1)) //把值加一后set到store中，元组左边返回的就是这个加一后的值
+    | PreDec acc -> //前置自减
+        let (loc, store1) as res = access acc locEnv gloEnv store //取要求的acc的地址和环境
+        let res = getSto store1 loc //得到要求的这个acc在store1的loc位置上的值
+        (res - 1, setSto store1 loc (res - 1)) //把值减一后set到store中，元组左边返回的就是这个减一后的值
+    | Andalso (e1, e2) -> //e1 && e2
+        let (i1, store1) as res = eval e1 locEnv gloEnv store //计算表达式e1的值和环境
 
-        if i1 <> 0 then
+        if i1 <> 0 then //表达式e1值不为0，就计算表达式e2的值和环境
             eval e2 locEnv gloEnv store1
-        else
+        else //表达式e1值为0，根据&&规则，结果就是res（即表达式e1的值=0）
             res
-    | Orelse (e1, e2) -> //||
-        let (i1, store1) as res = eval e1 locEnv gloEnv store
+    | Orelse (e1, e2) -> //e1 || e2
+        let (i1, store1) as res = eval e1 locEnv gloEnv store //计算表达式e1的值和环境
 
-        if i1 <> 0 then
+        if i1 <> 0 then //表达式e1值不为0，根据||规则，结果就是res（即表达式e1的值<>0）
             res
-        else
+        else //表达式e1值为0，，就计算表达式e2的值和环境
             eval e2 locEnv gloEnv store1
     | Call (f, es) -> callfun f es locEnv gloEnv store //函数调用
 
+//输入: 待求值的access类型（变量x，指针*p，数组a[4]）
+//返回: access 的左值（地址），和，store
+//  access : access -> locEnv -> gloEnv -> store -> address * store
 and access acc locEnv gloEnv store : int * store =
     match acc with
     | AccVar x -> (lookup (fst locEnv) x, store) //变量
     | AccDeref e -> eval e locEnv gloEnv store   //指针
     | AccIndex (acc, idx) -> //数组索引
-        let (a, store1) = access acc locEnv gloEnv store
-        let aval = getSto store1 a
-        let (i, store2) = eval idx locEnv gloEnv store1
-        (aval + i, store2) //首地址+i
+        let (a, store1) = access acc locEnv gloEnv store //先计算左值acc的地址和环境
+        let aval = getSto store1 a //得到acc的地址上的值
+        let (i, store2) = eval idx locEnv gloEnv store1 //计算store1中，索引是idx的值
+        (aval + i, store2) //首地址+i（i就是偏移量） 更改后的store
 
 and evals es locEnv gloEnv store : int list * store =
     match es with
