@@ -6,6 +6,6 @@ void main(){
     x++;
     /*print x*/
     x++;
-    (* print x *)
+    (* faskdlfj*)
     print x;
 }
