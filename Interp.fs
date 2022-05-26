@@ -339,6 +339,14 @@ and eval e locEnv gloEnv store : int * store =
         let (loc, store1) as res = access acc locEnv gloEnv store //取要求的acc的地址和环境
         let res = getSto store1 loc //得到要求的这个acc在store1的loc位置上的值
         (res - 1, setSto store1 loc (res - 1)) //把值减一后set到store中，元组左边返回的就是这个减一后的值
+    | NextInc acc -> //后置自增
+        let (loc, store1) as res = access acc locEnv gloEnv store //取要求的acc的地址和环境
+        let res = getSto store1 loc //得到要求的这个acc在store1的loc位置上的值
+        (res, setSto store1 loc (res + 1)) //把值加一后set到store中，元组左边返回的是加一前自身的值
+    | NextDec acc -> //后置自减
+        let (loc, store1) as res = access acc locEnv gloEnv store //取要求的acc的地址和环境
+        let res = getSto store1 loc //得到要求的这个acc在store1的loc位置上的值
+        (res, setSto store1 loc (res - 1)) //把值减一后set到store中，元组左边返回的是减一前自身的值
     | Andalso (e1, e2) -> //e1 && e2
         let (i1, store1) as res = eval e1 locEnv gloEnv store //计算表达式e1的值和环境
 

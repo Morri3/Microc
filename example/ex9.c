@@ -1,5 +1,4 @@
 // micro-C example 9 -- return a result via a pointer argument
-
 int t;
 
 void main(int i) {

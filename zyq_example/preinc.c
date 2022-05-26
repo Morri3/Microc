@@ -2,7 +2,11 @@
 void main() {
   int x;
   x = 3;
-  print x;
-  ++x;
-  print x;
+  print ++x;
+
+  int a[3];
+  a[0] = 1;
+  a[1] = 2;
+  a[2] = 3;
+  print ++a[2];
 }

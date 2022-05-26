@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "D:\\bianyi\\bighomework\\Microc\\microcc.fsproj": {}
+    "D:\\bianyi\\bigwork\\Microc\\microcc.fsproj": {}
   },
   "projects": {
-    "D:\\bianyi\\bighomework\\Microc\\microcc.fsproj": {
+    "D:\\bianyi\\bigwork\\Microc\\microcc.fsproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "D:\\bianyi\\bighomework\\Microc\\microcc.fsproj",
+        "projectUniqueName": "D:\\bianyi\\bigwork\\Microc\\microcc.fsproj",
         "projectName": "microcc",
-        "projectPath": "D:\\bianyi\\bighomework\\Microc\\microcc.fsproj",
+        "projectPath": "D:\\bianyi\\bigwork\\Microc\\microcc.fsproj",
         "packagesPath": "C:\\Users\\82444\\.nuget\\packages\\",
-        "outputPath": "D:\\bianyi\\bighomework\\Microc\\obj\\",
+        "outputPath": "D:\\bianyi\\bigwork\\Microc\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "C:\\Users\\82444\\AppData\\Roaming\\NuGet\\NuGet.Config"
@@ -60,7 +60,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\6.0.202\\RuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\6.0.203\\RuntimeIdentifierGraph.json"
         }
       }
     }

@@ -232,12 +232,12 @@ and Token  lexbuf =
           )
   | 9 -> ( 
 # 71 "CLex.fsl"
-                                     PREINC 
+                                     SELFINC 
 # 236 "CLex.fs"
           )
   | 10 -> ( 
 # 72 "CLex.fsl"
-                                     PREDEC 
+                                     SELFDEC 
 # 241 "CLex.fs"
           )
   | 11 -> ( 

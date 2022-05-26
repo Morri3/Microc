@@ -244,18 +244,40 @@ and cExpr (e: expr) (varEnv: VarEnv) (funEnv: FunEnv) : instr list =
              | _ -> raise (Failure "unknown primitive 2"))
     | PreInc acc -> cAccess acc varEnv funEnv @ [ DUP; LDI; CSTI 1; ADD; STI ]//前置自增
                                                         //先编译左值表达式acc
-                                                        //DUP:
+                                                        //DUP:复制栈顶的值，并将其压入栈顶
                                                         //LDI:将 栈帧上 某位置的值入栈
                                                         //CSTI:int类型变量
                                                         //ADD:值相加
                                                         //STI:将 值 写入栈上某个位置
     | PreDec acc -> cAccess acc varEnv funEnv @ [ DUP; LDI; CSTI 1; SUB; STI ]//前置自减
                                                         //先编译左值表达式acc
-                                                        //DUP:
+                                                        //DUP:复制栈顶的值，并将其压入栈顶
                                                         //LDI:将 栈帧上 某位置的值入栈
                                                         //CSTI:int类型变量
                                                         //SUB:值相减
                                                         //STI:将 值 写入栈上某个位置
+    | NextInc acc -> cAccess acc varEnv funEnv @ [ DUP; LDI; SWAP; DUP; LDI; CSTI 1; ADD; STI ; INCSP -1]//后置自增
+                                                        //先编译左值表达式acc
+                                                        //DUP:复制栈顶的值，并将其压入栈顶
+                                                        //LDI:将 栈帧上 某位置的值入栈
+                                                        //SWAP:交换元素
+                                                        //DUP:复制栈顶的值，并将其压入栈顶
+                                                        //LDI:将 栈帧上 某位置的值入栈
+                                                        //CSTI:int类型变量
+                                                        //ADD:值相加
+                                                        //STI:将 值 写入栈上某个位置
+                                                        //INCSP -1:释放空间
+    | NextDec acc -> cAccess acc varEnv funEnv @ [ DUP; LDI; SWAP; DUP; LDI; CSTI 1; SUB; STI ; INCSP -1]//后置自减
+                                                        //先编译左值表达式acc
+                                                        //DUP:复制栈顶的值，并将其压入栈顶
+                                                        //LDI:将 栈帧上 某位置的值入栈
+                                                        //SWAP:交换元素
+                                                        //DUP:复制栈顶的值，并将其压入栈顶
+                                                        //LDI:将 栈帧上 某位置的值入栈
+                                                        //CSTI:int类型变量
+                                                        //SUB:值相减
+                                                        //STI:将 值 写入栈上某个位置
+                                                        //INCSP -1:释放空间
     | Andalso (e1, e2) ->
         let labend = newLabel ()
         let labfalse = newLabel ()
@@ -280,7 +302,7 @@ and cExpr (e: expr) (varEnv: VarEnv) (funEnv: FunEnv) : instr list =
                 Label labend ]
     | Call (f, es) -> callfun f es varEnv funEnv
 
-(* 生成代码以访问变量、解引用指针或索引数组。编译代码的效果是在堆栈上留下一个左值。 *)
+(* 生成代码以访问变量、解引用指针或索引数组。编译代码的效果是在堆栈上留下一个左值 *)
 //编译左值表达式
 and cAccess access varEnv funEnv : instr list =
     match access with

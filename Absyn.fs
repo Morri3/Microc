@@ -31,6 +31,8 @@ and expr =                           // 表达式，右值
   | Call of string * expr list       (* Function call f(...)        *) //函数调用
   | PreInc of access                                           //自增 ++i or ++a[e]
   | PreDec of access                                           //自减 --i or --a[e]
+  | NextInc of access                                          //自增 i++ or a[e]++
+  | NextDec of access                                          //自减 i-- or a[e]--
                                                                    
 and access =                         //左值，存储的位置                                            
   | AccVar of string                 (* Variable access        x    *) //变量

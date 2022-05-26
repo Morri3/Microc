@@ -102,18 +102,33 @@ _L1_main_pro_2:
 	pop rax
 	mov rax,[rax]
 	push rax
-	;CSTI 1
-	push 1
-	;ADD
+	;SWAP
 	pop rax
 	pop r10
-	add rax, r10
+	push rax
+	push r10
+	;DUP
+	pop rax
+	push rax
+	push rax
+	;LDI
+	pop rax
+	mov rax,[rax]
+	push rax
+	;CSTI 1
+	push 1
+	;SUB
+	pop r10
+	pop rax
+	sub rax,r10
 	push rax
 	;STI
 	pop r10
 	pop rax
 	mov [rax],r10
 	push r10
+	;INCSP -1
+	lea rsp, [rsp-8*(-1)]
 	;PRINTI
 	pop rcx
 	push rcx
@@ -276,18 +291,33 @@ _L1_main_pro_2:
 	pop rax
 	mov rax,[rax]
 	push rax
-	;CSTI 1
-	push 1
-	;ADD
+	;SWAP
 	pop rax
 	pop r10
-	add rax, r10
+	push rax
+	push r10
+	;DUP
+	pop rax
+	push rax
+	push rax
+	;LDI
+	pop rax
+	mov rax,[rax]
+	push rax
+	;CSTI 1
+	push 1
+	;SUB
+	pop r10
+	pop rax
+	sub rax,r10
 	push rax
 	;STI
 	pop r10
 	pop rax
 	mov [rax],r10
 	push r10
+	;INCSP -1
+	lea rsp, [rsp-8*(-1)]
 	;PRINTI
 	pop rcx
 	push rcx
