@@ -156,6 +156,7 @@ n = 8;
 let store2str store =
     String.concat "" (List.map string (Map.toList store))
 
+//绑定单个值到环境
 let bindVar x v (env, nextloc) store : locEnv * store =
     let env1 = (x, nextloc) :: env //新的环境
     msg $"bindVar:\n%A{env1}\n"
@@ -168,7 +169,7 @@ let bindVar x v (env, nextloc) store : locEnv * store =
 
     ret 
 
-
+//绑定多个值到环境
 let rec bindVars xs vs locEnv store : locEnv * store =
     let res =
         match (xs, vs) with
@@ -207,17 +208,23 @@ let initEnvAndStore (topdecs: topdec list) : locEnv * funEnv * store =
     //包括全局函数和全局变量
     msg $"\ntopdecs:\n{topdecs}\n"
 
+    //构造全局环境
     let rec addv decs locEnv funEnv store =
         match decs with
         | [] -> (locEnv, funEnv, store)
 
         // 全局变量声明：调用 allocate 在store上给变量分配空间
         | Vardec (typ, x) :: decr ->
-            let (locEnv1, sto1) = allocate (typ, x) locEnv store
+            let (locEnv1, sto1) = allocate (typ, x) locEnv store //分配空间
             addv decr locEnv1 funEnv sto1
 
         //全局函数：将声明(f,(xs,body))添加到全局函数环境 funEnv
         | Fundec (_, f, xs, body) :: decr -> addv decr locEnv ((f, (xs, body)) :: funEnv) store
+
+        // 全局变量初始化：调用 allocate 在store上给变量分配空间
+        | VardecAndAssign (typ, x, expr) :: decr ->
+            let (locEnv1, sto1) = allocate (typ, x) locEnv store //分配空间
+            addv decr locEnv1 funEnv sto1
 
     // ([], 0) []  默认全局环境
     // locEnv ([],0) 变量环境 ，变量定义为空列表[],下一个空闲地址为0
@@ -274,8 +281,16 @@ let rec exec stmt (locEnv: locEnv) (gloEnv: gloEnv) (store: store) : store =
 
 and stmtordec stmtordec locEnv gloEnv store =
     match stmtordec with
-    | Stmt stmt -> (locEnv, exec stmt locEnv gloEnv store)
-    | Dec (typ, x) -> allocate (typ, x) locEnv store
+    | Stmt stmt -> (locEnv, exec stmt locEnv gloEnv store) //为语句分配空间
+    | Dec (typ, x) -> allocate (typ, x) locEnv store //局部变量调用allocate函数分配空间
+    | DecAndAssign (typ, x, expr) -> //局部变量初始化
+        let (locEnv1 ,store1) = allocate (typ, x) locEnv store //调用allocate函数，
+                                                                                               //为类型为typ的变量x在局部环境和store上分配空间，
+                                                                                               //这里返回的locEnv1就是该变量的局部环境
+        let (loc, store2) = access (AccVar x) locEnv1 gloEnv store1 //计算x的地址和更新过的store
+        let (res, store3) = eval expr locEnv gloEnv store2 //计算表达式expr，返回值和更新过的store
+        (locEnv1, setSto store3 loc res) //返回局部环境locEnv，把expr的值赋值给store3在loc位置上的变量，也就是赋值给变量x
+
 
 (* 计算micro-C表达式 *)
 //输入: 表达式 expr

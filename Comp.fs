@@ -84,7 +84,6 @@ let rec allocateWithMsg (kind: int -> Var) (typ, x) (varEnv: VarEnv) =
     (varEnv, instrs)
 
 and allocate (kind: int -> Var) (typ, x) (varEnv: VarEnv) : VarEnv * instr list =
-
     msg $"allocate called!{(x, typ)}"
  
     // newloc 下个空闲存储位置
@@ -104,9 +103,7 @@ and allocate (kind: int -> Var) (typ, x) (varEnv: VarEnv) : VarEnv * instr list 
             ((x, (kind (newloc), typ)) :: env, newloc + 1)
 
         let code = [ INCSP 1 ]
-
         // info (fun () -> printf "new varEnv: %A\n" newEnv) // 调试 显示分配后环境变化
-        
         (newEnv, code)
 
 
@@ -167,16 +164,19 @@ let rec cStmt stmt (varEnv: VarEnv) (funEnv: FunEnv) : instr list =
             @ [ GOTO labend ] //跳转到end标签
               @ [ Label labelse ] //else标签开始的地方
                 @ cStmt stmt2 varEnv funEnv @ [ Label labend ] //编译语句stmt2，并连上end标签，编译结束
-    | While (e, body) ->
-        let labbegin = newLabel ()
-        let labtest = newLabel ()
 
-        [ GOTO labtest; Label labbegin ]
-        @ cStmt body varEnv funEnv
-          @ [ Label labtest ]
-            @ cExpr e varEnv funEnv @ [ IFNZRO labbegin ]
-    | Expr e -> cExpr e varEnv funEnv @ [ INCSP -1 ]
-    | Block stmts ->
+    | While (e, body) ->
+        let labbegin = newLabel () //生成begin标签
+        let labtest = newLabel () //生成test标签
+
+        [ GOTO labtest; Label labbegin ] //跳转到test标签；begin标签开始的地方
+        @ cStmt body varEnv funEnv //编译语句stmt
+          @ [ Label labtest ] //test标签
+            @ cExpr e varEnv funEnv @ [ IFNZRO labbegin ] //编译表达式e；如果不等于0跳转到begin，实现循环
+
+    | Expr e -> cExpr e varEnv funEnv @ [ INCSP -1 ] //编译表达式
+
+    | Block stmts -> //块
 
         let rec loop stmts varEnv =
             match stmts with
@@ -190,8 +190,9 @@ let rec cStmt stmt (varEnv: VarEnv) (funEnv: FunEnv) : instr list =
 
         code @ [ INCSP(snd varEnv - fdepthend) ]
 
-    | Return None -> [ RET(snd varEnv - 1) ]
-    | Return (Some e) -> cExpr e varEnv funEnv @ [ RET(snd varEnv) ]
+    | Return None -> [ RET(snd varEnv - 1) ] //直接返回
+
+    | Return (Some e) -> cExpr e varEnv funEnv @ [ RET(snd varEnv) ] //返回某些值
 
 and cStmtOrDec stmtOrDec (varEnv: VarEnv) (funEnv: FunEnv) : VarEnv * instr list =
     match stmtOrDec with
@@ -239,7 +240,7 @@ and cExpr (e: expr) (varEnv: VarEnv) (funEnv: FunEnv) : instr list = //参数：
              | "<" -> [ LT ]
              | ">=" -> [ LT; NOT ]
              | ">" -> [ SWAP; LT ]
-             | "<=" -> [ SWAP; LT; NOT ] //左边应该是栈底
+             | "<=" -> [ SWAP; LT; NOT ] //指令顺序：从左往右
              | _ -> raise (Failure "unknown primitive 2"))
     | Prim3 (ope, acc, e) -> //复合赋值运算符
         cAccess acc varEnv funEnv //计算左值acc
@@ -253,7 +254,7 @@ and cExpr (e: expr) (varEnv: VarEnv) (funEnv: FunEnv) : instr list = //参数：
               | "/=" -> [ DIV ] @ [STI]
               | "%=" -> [ MOD ] @ [STI]
               | _ -> raise (Failure "unknown primitive 3"))
-             
+
     | TernaryOperator (e1,e2,e3) -> //三目运算符
         let labelse = newLabel () //生成else语句的标签
         let labend = newLabel () //生成end语句的标签
@@ -264,6 +265,7 @@ and cExpr (e: expr) (varEnv: VarEnv) (funEnv: FunEnv) : instr list = //参数：
             @ [ GOTO labend ] //跳转到end标签
               @ [ Label labelse ] //else标签开始的地方
                 @ cExpr e3 varEnv funEnv @ [ Label labend ] //编译e3表达式，并连上end标签，编译结束
+
     | PreInc acc -> cAccess acc varEnv funEnv @ [ DUP; LDI; CSTI 1; ADD; STI ]//前置自增
                                                         //先编译左值表达式acc，得到acc的地址
                                                         //DUP:复制栈顶的acc地址，现在栈中有两个
@@ -271,6 +273,7 @@ and cExpr (e: expr) (varEnv: VarEnv) (funEnv: FunEnv) : instr list = //参数：
                                                         //CSTI 1:int类型变量，值为1
                                                         //ADD:栈顶的acc地址的值+1
                                                         //STI:将 上一步+1后的值 写入栈顶，即set s[s[sp-1]]
+
     | PreDec acc -> cAccess acc varEnv funEnv @ [ DUP; LDI; CSTI 1; SUB; STI ]//前置自减
                                                         //先编译左值表达式acc，得到acc的地址
                                                         //DUP:复制栈顶的acc地址，现在栈中有两个
@@ -278,6 +281,7 @@ and cExpr (e: expr) (varEnv: VarEnv) (funEnv: FunEnv) : instr list = //参数：
                                                         //CSTI 1:int类型变量，值为1
                                                         //SUB:栈顶的acc地址的值-1
                                                         //STI:将 上一步-1后的值 写入栈顶，即set s[s[sp-1]]
+
     | NextInc acc -> cAccess acc varEnv funEnv @ [ DUP; LDI; SWAP; DUP; LDI; CSTI 1; ADD; STI ; INCSP -1]//后置自增
                                                         //先编译左值表达式acc，得到acc的地址
                                                         //DUP:复制栈顶的acc地址，现在栈中有两个
@@ -289,6 +293,7 @@ and cExpr (e: expr) (varEnv: VarEnv) (funEnv: FunEnv) : instr list = //参数：
                                                         //ADD:栈顶的acc地址的值+1
                                                         //STI:将 上一步+1后的值 写入栈顶，即set s[s[sp-1]]，因为s[sp]=s[s[sp]]，故也就是把新值赋值给一开始的acc
                                                         //INCSP -1:释放空间
+
     | NextDec acc -> cAccess acc varEnv funEnv @ [ DUP; LDI; SWAP; DUP; LDI; CSTI 1; SUB; STI ; INCSP -1]//后置自减
                                                         //先编译左值表达式acc，得到acc的地址
                                                         //DUP:复制栈顶的acc地址，现在栈中有两个
@@ -300,28 +305,31 @@ and cExpr (e: expr) (varEnv: VarEnv) (funEnv: FunEnv) : instr list = //参数：
                                                         //SUB:栈顶的acc地址的值-1
                                                         //STI:将 上一步-1后的值 写入栈顶，即set s[s[sp-1]]，因为s[sp]=s[s[sp]]，故也就是把新值赋值给一开始的acc
                                                         //INCSP -1:释放空间
+
     | Andalso (e1, e2) -> //逻辑与
-        let labend = newLabel ()
-        let labfalse = newLabel ()
+        let labend = newLabel () //生成end语句的标签
+        let labfalse = newLabel () //生成false部分的标签
 
-        cExpr e1 varEnv funEnv
-        @ [ IFZERO labfalse ]
-          @ cExpr e2 varEnv funEnv
-            @ [ GOTO labend
-                Label labfalse
-                CSTI 0
-                Label labend ]
+        cExpr e1 varEnv funEnv //编译e1表达式
+        @ [ IFZERO labfalse ] //若等于0跳转到false部分
+          @ cExpr e2 varEnv funEnv //编译e2表达式
+            @ [ GOTO labend //跳转到end语句
+                Label labfalse //false标签
+                CSTI 0 //int类型变量0
+                Label labend ] //end标签
+
     | Orelse (e1, e2) -> //逻辑或
-        let labend = newLabel ()
-        let labtrue = newLabel ()
+        let labend = newLabel () //生成end语句的标签
+        let labtrue = newLabel () //生成true部分的标签
 
-        cExpr e1 varEnv funEnv
-        @ [ IFNZRO labtrue ]
-          @ cExpr e2 varEnv funEnv
-            @ [ GOTO labend
-                Label labtrue
-                CSTI 1
-                Label labend ]
+        cExpr e1 varEnv funEnv //编译e1表达式
+        @ [ IFNZRO labtrue ] //若等于0跳转到true部分
+          @ cExpr e2 varEnv funEnv //编译e2表达式
+            @ [ GOTO labend //跳转到end语句
+                Label labtrue //true标签
+                CSTI 1 //int类型变量1
+                Label labend ] //end标签
+
     | Call (f, es) -> callfun f es varEnv funEnv //函数调用
 
 
@@ -363,7 +371,7 @@ and cExprs es varEnv funEnv : instr list =
 
 (* 生成代码以计算参数es，然后调用函数f： *)
 and callfun f es varEnv funEnv : instr list =
-    let (labf, tyOpt, paramdecs) = lookup funEnv f
+    let (labf, tyOpt, paramdecs) = lookup funEnv f //寻找f的函数环境funEnv
     let argc = List.length es
 
     if argc = List.length paramdecs then

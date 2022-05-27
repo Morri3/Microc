@@ -49,14 +49,16 @@ and stmt =                           //语句
   | Block of stmtordec list          (* Block: grouping and scope   *) //语句块
   // 语句块内部，可以是 变量声明 或 语句的列表
 
-and stmtordec =                                                    
+and stmtordec =
   | Dec of typ * string              (* Local variable declaration  *) //局部变量声明
   | Stmt of stmt                     (* A statement                 *) //一个语句
+  | DecAndAssign of typ * string * expr  //局部变量初始化（声明的时候就赋值）
 
 // 顶级声明 可以是函数声明或变量声明
 and topdec = 
   | Fundec of typ option * string * (typ * string) list * stmt //函数声明
   | Vardec of typ * string //变量声明
+  | VardecAndAssign of typ * string * expr //全局变量初始化（声明的时候就赋值）
 
 // 程序是顶级声明的列表
 and program = 

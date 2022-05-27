@@ -30,6 +30,7 @@ let bin2Dec value=
         | [] -> 0
         | xr::yr -> xr * pow (len yr) + eval yr
     eval (binaryToList value [])
+
 // 8进制转换函数
 let oct2Dec value=
     let rec octalToList value n =
@@ -48,6 +49,7 @@ let oct2Dec value=
         | [] -> 0
         | xr::yr -> xr * pow (len yr) + eval yr
     eval (octalToList value [])
+
 // 16进制转换函数
 let hex2Dec value = 
     let rec hexaToList (str:string)  = 
