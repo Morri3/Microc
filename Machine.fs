@@ -15,7 +15,7 @@ type label = string
 // 汇编指令
 type instr =
   | Label of label                     (* symbolic label; pseudo-instruc. *)
-  | FLabel of int * label                     (* symbolic label; pseudo-instruc. *)
+  | FLabel of int * label              (* symbolic label; pseudo-instruc. *)
   | CSTI of int                        (* constant                        *)
   | OFFSET of int                      (* constant     偏移地址  x86      *) 
   | GVAR of int                        (* global var     全局变量  x86    *) 
@@ -27,7 +27,7 @@ type instr =
   | EQ                                 (* equality: s[sp-1] == s[sp]      *)
   | LT                                 (* less than: s[sp-1] < s[sp]      *)
   | NOT                                (* logical negation:  s[sp] != 0   *)
-  | DUP                                (* duplicate stack top             *)
+  | DUP                                (* 栈顶元素复制一份                 *)
   | SWAP                               (* swap s[sp-1] and s[sp]          *)
   | LDI                                (* get s[s[sp]]                    *)
   | STI                                (* set s[s[sp-1]]                  *)
@@ -42,18 +42,16 @@ type instr =
   | RET of int                         (* pop m and return to s[sp]       *)
   | PRINTI                             (* print s[sp] as integer          *)
   | PRINTC                             (* print s[sp] as character        *)
-  | LDARGS of int                             (* load command line args on stack *)
+  | LDARGS of int                      (* load command line args on stack *)
   | STOP                               (* halt the abstract machine       *)
 
-(* Generate new distinct labels *)
-
+(* 生成新的不同标签 *)
 // 返回两个函数 resetLabels , newLabel
 let (resetLabels, newLabel) = 
     let lastlab = ref -1
-    ((fun () -> lastlab := 0), (fun () -> (lastlab := 1 + !lastlab; "L" + (!lastlab).ToString())))
+    ((fun () -> lastlab := 0), (fun () -> (lastlab := 1 + !lastlab; "L" + (!lastlab).ToString())))  //标签像：L1_main L2这种
 
-(* Simple environment operations *)
-
+(* 简单的环境操作 *)
 type 'data env = (string * 'data) list
 
 let rec lookup env x = 
@@ -65,7 +63,11 @@ let rec lookup env x =
    * pass 1 builds an environment labenv mapping labels to addresses 
    * pass 2 emits the code to file, using the environment labenv to 
      resolve labels
- *)
+
+   指令列表分两个阶段发出：
+    *pass 1：构建一个环境labenv将标签映射到地址
+    *pass 2：使用环境labenv解析标签，将代码发送到文件
+*)
 
 (* These numeric instruction codes must agree with Machine.java: *)
 
@@ -73,8 +75,7 @@ let rec lookup env x =
 
 //机器码
 
-//[<Literal>] 属性可以让 
-//该变量在模式匹配时候被匹配,否则匹配时只能用数值.不能用变量名
+//[<Literal>] 属性可以让该变量在模式匹配时候被匹配,否则匹配时只能用数值.不能用变量名
 
 
 

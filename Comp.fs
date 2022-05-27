@@ -28,9 +28,7 @@ open Debug
 open Backend
 
 (* ------------------------------------------------------------------- *)
-
 (* 简单的环境操作 *)
-
 type 'data Env = (string * 'data) list
 
 let rec lookup env x =
@@ -39,7 +37,6 @@ let rec lookup env x =
     | (y, v) :: yr -> if x = y then v else lookup yr x
 
 (* 全局变量具有绝对地址，局部变量具有偏移量： *)
-
 type Var =
     | Glovar of int (* 堆栈中的绝对地址           *)
     | Locvar of int (* 相对于frame底部的地址 *)
@@ -64,13 +61,14 @@ h 是整型数组，长度为 3，g是整数，下一个空闲位置是 5
 
 type VarEnv = (Var * typ) Env * int
 
-(* 函数环境将函数名映射到标签和参数decs *)
 
+(* 函数环境将函数名映射到标签和参数decs *)
 type Paramdecs = (typ * string) list
 
 type FunEnv = (label * typ option * Paramdecs) Env
 
 let isX86Instr = ref false
+
 
 (* 在env中绑定声明的变量并生成代码来分配它： *)
 // kind : Glovar / Locvar
@@ -111,17 +109,16 @@ and allocate (kind: int -> Var) (typ, x) (varEnv: VarEnv) : VarEnv * instr list 
         
         (newEnv, code)
 
-(* 在env中绑定声明的参数： *)
 
+(* 在env中绑定声明的参数： *)
 let bindParam (env, newloc) (typ, x) : VarEnv =
     ((x, (Locvar newloc, typ)) :: env, newloc + 1)
 
 let bindParams paras ((env, newloc): VarEnv) : VarEnv = List.fold bindParam (env, newloc) paras
 
+
 (* ------------------------------------------------------------------- *)
-
 (* 为全局变量和函数构建环境 *)
-
 let makeGlobalEnvs (topdecs: topdec list) : VarEnv * FunEnv * instr list =
     let rec addv decs varEnv funEnv =
 
@@ -149,8 +146,9 @@ let x86patch code =
         code @ [ CSTI -8; MUL ] // x86 偏移地址*8
     else
         code 
-(* ------------------------------------------------------------------- *)
 
+
+(* ------------------------------------------------------------------- *)
 (* 编译micro-C语句:
    * stmt    是要编译的语句
    * varenv  是局部变量环境和全局变量环境
@@ -160,15 +158,15 @@ let x86patch code =
 let rec cStmt stmt (varEnv: VarEnv) (funEnv: FunEnv) : instr list =
     match stmt with
     | If (e, stmt1, stmt2) ->
-        let labelse = newLabel ()
-        let labend = newLabel ()
+        let labelse = newLabel () //生成else语句的标签
+        let labend = newLabel () //生成end语句的标签
 
-        cExpr e varEnv funEnv
-        @ [ IFZERO labelse ]
-          @ cStmt stmt1 varEnv funEnv
-            @ [ GOTO labend ]
-              @ [ Label labelse ]
-                @ cStmt stmt2 varEnv funEnv @ [ Label labend ]
+        cExpr e varEnv funEnv //编译表达式e
+        @ [ IFZERO labelse ] //如果表达式e等于0，跳到else标签
+          @ cStmt stmt1 varEnv funEnv //编译语句stmt1
+            @ [ GOTO labend ] //跳转到end标签
+              @ [ Label labelse ] //else标签开始的地方
+                @ cStmt stmt2 varEnv funEnv @ [ Label labend ] //编译语句stmt2，并连上end标签，编译结束
     | While (e, body) ->
         let labbegin = newLabel ()
         let labtest = newLabel ()
@@ -200,6 +198,7 @@ and cStmtOrDec stmtOrDec (varEnv: VarEnv) (funEnv: FunEnv) : VarEnv * instr list
     | Stmt stmt -> (varEnv, cStmt stmt varEnv funEnv)
     | Dec (typ, x) -> allocateWithMsg Locvar (typ, x) varEnv
 
+
 (* 编译micro-C表达式:
 
    * e       是要编译的表达式
@@ -211,25 +210,25 @@ and cStmtOrDec stmtOrDec (varEnv: VarEnv) (funEnv: FunEnv) : VarEnv * instr list
    （从而用一个元素扩展当前堆栈帧).
 *)
 //编译右值表达式
-and cExpr (e: expr) (varEnv: VarEnv) (funEnv: FunEnv) : instr list =
+and cExpr (e: expr) (varEnv: VarEnv) (funEnv: FunEnv) : instr list = //参数：表达式e，变量环境varEnv，函数环境funEnv，返回汇编指令列表
     match e with
-    | Access acc -> cAccess acc varEnv funEnv @ [ LDI ]
-    | Assign (acc, e) ->
-        cAccess acc varEnv funEnv
-        @ cExpr e varEnv funEnv @ [ STI ]
-    | CstI i -> [ CSTI i ]
-    | Addr acc -> cAccess acc varEnv funEnv
-    | Prim1 (ope, e1) ->
+    | Access acc -> cAccess acc varEnv funEnv @ [ LDI ] //左值
+    | Assign (acc, e) -> //赋值
+        cAccess acc varEnv funEnv //计算左值acc
+        @ cExpr e varEnv funEnv @ [ STI ] //把表达式e的值写入栈顶
+    | CstI i -> [ CSTI i ] //int类型变量
+    | Addr acc -> cAccess acc varEnv funEnv //左值acc的地址
+    | Prim1 (ope, e1) -> //一元表达式
         cExpr e1 varEnv funEnv
-        @ (match ope with
+        @ (match ope with //操作符模式匹配
            | "!" -> [ NOT ]
            | "printi" -> [ PRINTI ]
            | "printc" -> [ PRINTC ]
            | _ -> raise (Failure "unknown primitive 1"))
-    | Prim2 (ope, e1, e2) ->
-        cExpr e1 varEnv funEnv
-        @ cExpr e2 varEnv funEnv
-          @ (match ope with
+    | Prim2 (ope, e1, e2) -> //二元表达式
+        cExpr e1 varEnv funEnv //计算e1表达式
+        @ cExpr e2 varEnv funEnv //计算e2表达式
+          @ (match ope with //匹配操作符
              | "*" -> [ MUL ]
              | "+" -> [ ADD ]
              | "-" -> [ SUB ]
@@ -240,45 +239,68 @@ and cExpr (e: expr) (varEnv: VarEnv) (funEnv: FunEnv) : instr list =
              | "<" -> [ LT ]
              | ">=" -> [ LT; NOT ]
              | ">" -> [ SWAP; LT ]
-             | "<=" -> [ SWAP; LT; NOT ]
+             | "<=" -> [ SWAP; LT; NOT ] //左边应该是栈底
              | _ -> raise (Failure "unknown primitive 2"))
+    | Prim3 (ope, acc, e) -> //复合赋值运算符
+        cAccess acc varEnv funEnv //计算左值acc
+        @ [DUP] @ [LDI] //DUP:复制栈顶的acc地址，现在栈中有两个
+                        //LDI:取出栈顶的这个acc地址的值
+          @ cExpr e varEnv funEnv //计算e表达式
+            @ (match ope with //匹配操作符
+              | "+=" -> [ ADD ] @ [STI] //栈顶acc的值+e表达式的结果，然后写入栈顶进行赋值，即set s[s[sp-1]]
+              | "-=" -> [ SUB ] @ [STI]
+              | "*=" -> [ MUL ] @ [STI]
+              | "/=" -> [ DIV ] @ [STI]
+              | "%=" -> [ MOD ] @ [STI]
+              | _ -> raise (Failure "unknown primitive 3"))
+             
+    | TernaryOperator (e1,e2,e3) -> //三目运算符
+        let labelse = newLabel () //生成else语句的标签
+        let labend = newLabel () //生成end语句的标签
+        
+        cExpr e1 varEnv funEnv //计算e1表达式
+        @ [ IFZERO labelse ] //如果表达式e等于0，跳到else标签
+          @ cExpr e2 varEnv funEnv //编译e2表达式
+            @ [ GOTO labend ] //跳转到end标签
+              @ [ Label labelse ] //else标签开始的地方
+                @ cExpr e3 varEnv funEnv @ [ Label labend ] //编译e3表达式，并连上end标签，编译结束
     | PreInc acc -> cAccess acc varEnv funEnv @ [ DUP; LDI; CSTI 1; ADD; STI ]//前置自增
-                                                        //先编译左值表达式acc
-                                                        //DUP:复制栈顶的值，并将其压入栈顶
-                                                        //LDI:将 栈帧上 某位置的值入栈
-                                                        //CSTI:int类型变量
-                                                        //ADD:值相加
-                                                        //STI:将 值 写入栈上某个位置
+                                                        //先编译左值表达式acc，得到acc的地址
+                                                        //DUP:复制栈顶的acc地址，现在栈中有两个
+                                                        //LDI:取出栈顶的这个acc地址的值
+                                                        //CSTI 1:int类型变量，值为1
+                                                        //ADD:栈顶的acc地址的值+1
+                                                        //STI:将 上一步+1后的值 写入栈顶，即set s[s[sp-1]]
     | PreDec acc -> cAccess acc varEnv funEnv @ [ DUP; LDI; CSTI 1; SUB; STI ]//前置自减
-                                                        //先编译左值表达式acc
-                                                        //DUP:复制栈顶的值，并将其压入栈顶
-                                                        //LDI:将 栈帧上 某位置的值入栈
-                                                        //CSTI:int类型变量
-                                                        //SUB:值相减
-                                                        //STI:将 值 写入栈上某个位置
+                                                        //先编译左值表达式acc，得到acc的地址
+                                                        //DUP:复制栈顶的acc地址，现在栈中有两个
+                                                        //LDI:取出栈顶的这个acc地址的值
+                                                        //CSTI 1:int类型变量，值为1
+                                                        //SUB:栈顶的acc地址的值-1
+                                                        //STI:将 上一步-1后的值 写入栈顶，即set s[s[sp-1]]
     | NextInc acc -> cAccess acc varEnv funEnv @ [ DUP; LDI; SWAP; DUP; LDI; CSTI 1; ADD; STI ; INCSP -1]//后置自增
-                                                        //先编译左值表达式acc
-                                                        //DUP:复制栈顶的值，并将其压入栈顶
-                                                        //LDI:将 栈帧上 某位置的值入栈
-                                                        //SWAP:交换元素
-                                                        //DUP:复制栈顶的值，并将其压入栈顶
-                                                        //LDI:将 栈帧上 某位置的值入栈
-                                                        //CSTI:int类型变量
-                                                        //ADD:值相加
-                                                        //STI:将 值 写入栈上某个位置
+                                                        //先编译左值表达式acc，得到acc的地址
+                                                        //DUP:复制栈顶的acc地址，现在栈中有两个
+                                                        //LDI:将复制后的栈顶的acc地址的值入栈，即s[sp]=s[s[sp]]
+                                                        //SWAP:交换栈顶和复制前的元素，交换后靠栈底的那个是左值acc原来的值
+                                                        //DUP:复制栈顶的acc地址
+                                                        //LDI:取出栈顶的这个acc地址的值
+                                                        //CSTI 1:int类型变量，值为1
+                                                        //ADD:栈顶的acc地址的值+1
+                                                        //STI:将 上一步+1后的值 写入栈顶，即set s[s[sp-1]]，因为s[sp]=s[s[sp]]，故也就是把新值赋值给一开始的acc
                                                         //INCSP -1:释放空间
     | NextDec acc -> cAccess acc varEnv funEnv @ [ DUP; LDI; SWAP; DUP; LDI; CSTI 1; SUB; STI ; INCSP -1]//后置自减
-                                                        //先编译左值表达式acc
-                                                        //DUP:复制栈顶的值，并将其压入栈顶
-                                                        //LDI:将 栈帧上 某位置的值入栈
-                                                        //SWAP:交换元素
-                                                        //DUP:复制栈顶的值，并将其压入栈顶
-                                                        //LDI:将 栈帧上 某位置的值入栈
-                                                        //CSTI:int类型变量
-                                                        //SUB:值相减
-                                                        //STI:将 值 写入栈上某个位置
+                                                        //先编译左值表达式acc，得到acc的地址
+                                                        //DUP:复制栈顶的acc地址，现在栈中有两个
+                                                        //LDI:将复制后的栈顶的acc地址的值入栈，即s[sp]=s[s[sp]]
+                                                        //SWAP:交换栈顶和复制前的元素，交换后靠栈底的那个是左值acc原来的值
+                                                        //DUP:复制栈顶的acc地址
+                                                        //LDI:取出栈顶的这个acc地址的值
+                                                        //CSTI 1:int类型变量，值为1
+                                                        //SUB:栈顶的acc地址的值-1
+                                                        //STI:将 上一步-1后的值 写入栈顶，即set s[s[sp-1]]，因为s[sp]=s[s[sp]]，故也就是把新值赋值给一开始的acc
                                                         //INCSP -1:释放空间
-    | Andalso (e1, e2) ->
+    | Andalso (e1, e2) -> //逻辑与
         let labend = newLabel ()
         let labfalse = newLabel ()
 
@@ -289,7 +311,7 @@ and cExpr (e: expr) (varEnv: VarEnv) (funEnv: FunEnv) : instr list =
                 Label labfalse
                 CSTI 0
                 Label labend ]
-    | Orelse (e1, e2) ->
+    | Orelse (e1, e2) -> //逻辑或
         let labend = newLabel ()
         let labtrue = newLabel ()
 
@@ -300,42 +322,46 @@ and cExpr (e: expr) (varEnv: VarEnv) (funEnv: FunEnv) : instr list =
                 Label labtrue
                 CSTI 1
                 Label labend ]
-    | Call (f, es) -> callfun f es varEnv funEnv
+    | Call (f, es) -> callfun f es varEnv funEnv //函数调用
+
 
 (* 生成代码以访问变量、解引用指针或索引数组。编译代码的效果是在堆栈上留下一个左值 *)
 //编译左值表达式
-and cAccess access varEnv funEnv : instr list =
+and cAccess access varEnv funEnv : instr list = //返回的是汇编指令列表
     match access with
-    | AccVar x ->
-        match lookup (fst varEnv) x with
+    | AccVar x -> //左值变量
+        match lookup (fst varEnv) x with //找变量环境
         // x86 虚拟机指令 需要知道是全局变量 [GVAR addr]
         // 栈式虚拟机Stack VM 的全局变量的地址是 栈上的偏移 用 [CSTI addr] 表示
         // F# ! 操作符 取引用类型的值
-        | Glovar addr, _ ->
+        | Glovar addr, _ -> //全局变量
             if !isX86Instr then
-                [ GVAR addr ]
+                [ GVAR addr ] //是x86虚拟机指令，返回全局变量。[GVAR addr]是x86中全局变量的表示
             else
-                [ CSTI addr ]
-        | Locvar addr, _ -> [ GETBP; OFFSET addr; ADD ]
-    | AccDeref e ->
+                [ CSTI addr ] //不是x86虚拟机指令，返回int类型地址
+        | Locvar addr, _ -> [ GETBP; OFFSET addr; ADD ] //局部变量
+                                  //GETBP：得到当前栈帧基地址
+                                  //OFFSET addr：设置偏移量为addr
+                                  //ADD：相加，即栈帧基地址+偏移量，就是变量的位置
+    | AccDeref e -> //引用
         match e with
-        | Access _ -> (cExpr e varEnv funEnv)
-        | Addr _ -> (cExpr e varEnv funEnv)
+        | Access _ -> (cExpr e varEnv funEnv) //左值引用，返回表达式e的汇编指令列表
+        | Addr _ -> (cExpr e varEnv funEnv) //地址引用，返回表达式e的汇编指令列表
         | _ ->
             printfn "WARN: x86 pointer arithmetic not support!"
             (cExpr e varEnv funEnv)
-    | AccIndex (acc, idx) ->
-        cAccess acc varEnv funEnv
-        @ [ LDI ]
-          @ x86patch (cExpr idx varEnv funEnv) @ [ ADD ]
+    | AccIndex (acc, idx) -> //索引
+        cAccess acc varEnv funEnv //先编译左值表达式acc
+        @ [ LDI ] //栈帧上acc位置的值入栈
+          @ x86patch (cExpr idx varEnv funEnv) @ [ ADD ] //生成x86代码，并相加得到结果
+
 
 (* 生成代码以计算表达式列表： *)
-
 and cExprs es varEnv funEnv : instr list =
     List.concat (List.map (fun e -> cExpr e varEnv funEnv) es)
 
-(* 生成代码以计算参数es，然后调用函数f： *)
 
+(* 生成代码以计算参数es，然后调用函数f： *)
 and callfun f es varEnv funEnv : instr list =
     let (labf, tyOpt, paramdecs) = lookup funEnv f
     let argc = List.length es
@@ -378,10 +404,10 @@ let cProgram (Prog topdecs) : instr list =
         STOP ]
       @ List.concat functions
 
+
 (* 编译一个完整的micro-C，并将生成的指令列表写入fname文件；另外，将程序
    作为指令列表返回。
- *)
-
+*)
 let intsToFile (inss: int list) (fname: string) =
     File.WriteAllText(fname, String.concat " " (List.map string inss))
 

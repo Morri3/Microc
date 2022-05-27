@@ -29,10 +29,12 @@ and expr =                           // 表达式，右值
   | Andalso of expr * expr           (* Sequential and              *) //与
   | Orelse of expr * expr            (* Sequential or               *) //或
   | Call of string * expr list       (* Function call f(...)        *) //函数调用
-  | PreInc of access                                           //自增 ++i or ++a[e]
-  | PreDec of access                                           //自减 --i or --a[e]
-  | NextInc of access                                          //自增 i++ or a[e]++
-  | NextDec of access                                          //自减 i-- or a[e]--
+  | PreInc of access                                           //前置自增 ++i or ++a[e]
+  | PreDec of access                                           //前置自减 --i or --a[e]
+  | NextInc of access                                          //后置自增 i++ or a[e]++
+  | NextDec of access                                          //后置自减 i-- or a[e]--
+  | TernaryOperator of expr * expr * expr        //三目运算符 ? :
+  | Prim3 of string * access * expr        //复合赋值运算符
                                                                    
 and access =                         //左值，存储的位置                                            
   | AccVar of string                 (* Variable access        x    *) //变量

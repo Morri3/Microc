@@ -1,26 +1,26 @@
 {
   "format": 1,
   "restore": {
-    "D:\\compile\\bigwork\\Microc\\microc.fsproj": {}
+    "D:\\bianyi\\Microc\\microc.fsproj": {}
   },
   "projects": {
-    "D:\\compile\\bigwork\\Microc\\microc.fsproj": {
+    "D:\\bianyi\\Microc\\microc.fsproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "D:\\compile\\bigwork\\Microc\\microc.fsproj",
+        "projectUniqueName": "D:\\bianyi\\Microc\\microc.fsproj",
         "projectName": "microc",
-        "projectPath": "D:\\compile\\bigwork\\Microc\\microc.fsproj",
-        "packagesPath": "C:\\Users\\Cc\\.nuget\\packages\\",
-        "outputPath": "D:\\compile\\bigwork\\Microc\\obj\\",
+        "projectPath": "D:\\bianyi\\Microc\\microc.fsproj",
+        "packagesPath": "C:\\Users\\82444\\.nuget\\packages\\",
+        "outputPath": "D:\\bianyi\\Microc\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
-          "C:\\Users\\Cc\\AppData\\Roaming\\NuGet\\NuGet.Config"
+          "C:\\Users\\82444\\AppData\\Roaming\\NuGet\\NuGet.Config"
         ],
         "originalTargetFrameworks": [
           "net6.0"
         ],
         "sources": {
-          "https://api.nuget.org/v3/index.json": {}
+          "https://nuget.cdn.azure.cn/v3/index.json": {}
         },
         "frameworks": {
           "net6.0": {
@@ -60,7 +60,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files (x86)\\dotnet\\sdk\\6.0.200\\RuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\6.0.203\\RuntimeIdentifierGraph.json"
         }
       }
     }

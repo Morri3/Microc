@@ -106,7 +106,7 @@ let cEscape s =
     | "\\r"  -> '\r'     //回车
     | _      -> failwith "Lexer error: impossible C escape"
 }
-                        
+
 rule Token = parse          // 每个 规则rule 会生成为一个函数，函数名是规则名 Token
   | [' ' '\t' '\r'] { Token lexbuf }      //空格、制表符、回车
                              // 变量是lexbuf 函数Token的默认参数，由外部程序构造
@@ -142,8 +142,15 @@ rule Token = parse          // 每个 规则rule 会生成为一个函数，函�
   | '<'             { LT }    //小于
   | ">="            { GE }    //大于等于
   | "<="            { LE }    //小于等于
-  | "||"            { SEQOR }    //或          
-  | "&&"            { SEQAND }   //与          
+  | '?'             { QUESMARK } //问号
+  | ':'             { COLON } //冒号
+  | "/="            { DIVASSIGN } //复合赋值运算符/=
+  | "*="            { TIMESASSIGN } //复合赋值运算符*=
+  | "%="            { MODASSIGN } //复合赋值运算符%=
+  | "+="            { PLUSASSIGN } //复合赋值运算符+=
+  | "-="            { MINUSASSIGN } //复合赋值运算符-=
+  | "||"            { SEQOR }    //或
+  | "&&"            { SEQAND }   //与
   | "&"             { AMP }      //按位与
   | "!"             { NOT }      //取反     
   | '('             { LPAR }     //左括号
@@ -166,7 +173,7 @@ rule Token = parse          // 每个 规则rule 会生成为一个函数，函�
 
 and Comment = parse
    | "/*"           { Comment lexbuf; Comment lexbuf }  // 注释的嵌套调用处理
-   | "*/"           { ()) }                           // 注释处理结束
+   | "*/"           { () }                           // 注释处理结束
    | "(* "           { Comment lexbuf; Comment lexbuf }
    | "*)"           { () }
    | '\n'           { lexbuf.EndPos <- lexbuf.EndPos.NextLine; Comment lexbuf } //注释跨行处理，A<-B表示把内容A替换为B

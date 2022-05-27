@@ -312,8 +312,8 @@ and eval e locEnv gloEnv store : int * store =
 
         (res, store1) //返回模式匹配计算到的值和存储
     | Prim2 (ope, e1, e2) -> //二元基本算子
-        let (i1, store1) = eval e1 locEnv gloEnv store //第一个参数的store
-        let (i2, store2) = eval e2 locEnv gloEnv store1 //第二个参数的store
+        let (i1, store1) = eval e1 locEnv gloEnv store //计算表达式e1，第一个参数的store
+        let (i2, store2) = eval e2 locEnv gloEnv store1 //计算表达式e2，第二个参数的store
 
         let res =
             match ope with
@@ -331,6 +331,29 @@ and eval e locEnv gloEnv store : int * store =
             | _ -> failwith ("unknown primitive " + ope)
 
         (res, store2)
+    | Prim3 (ope, acc, e) -> //复合赋值运算符
+        let (loc, store1) = access acc locEnv gloEnv store //取要求的acc的地址和环境store1
+        let v1=getSto store1 loc //得到acc地址上的值
+        let (v2, store2) = eval e locEnv gloEnv store1 //计算表达式e的值，并得到新环境store2
+        
+        let res= //匹配五种复合赋值运算符，得到计算结果
+            match ope with
+            | "+=" -> v1 + v2
+            | "-=" -> v1 - v2
+            | "*=" -> v1 * v2
+            | "/=" -> v1 / v2
+            | "%=" -> v1 % v2
+            | _ -> failwith ("unknown primitive " + ope)
+        
+        (res, setSto store2 loc res) //返回的store是把计算结果存到左值acc地址上后的新store
+    | TernaryOperator (e1, e2, e3) -> //三目运算符
+        let (v, store1) = eval e1 locEnv gloEnv store //计算表达式e1的值
+        if v <> 0 then //表达式e1不为0
+            let (v2, store2) = eval e2 locEnv gloEnv store1//计算e2
+            (v2,store2) //返回结果和store2
+        else //表达式e1为0
+            let (v2, store2) = eval e3 locEnv gloEnv store1//计算e3
+            (v2,store2) //返回结果和store2
     | PreInc acc -> //前置自增
         let (loc, store1) as res = access acc locEnv gloEnv store //取要求的acc的地址和环境
         let res = getSto store1 loc //得到要求的这个acc在store1的loc位置上的值
