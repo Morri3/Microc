@@ -47,6 +47,8 @@ and stmt =                           //语句
   | Expr of expr                     (* Expression statement   e;   *) //表达式
   | Return of expr option            (* Return from method          *) //返回
   | Block of stmtordec list          (* Block: grouping and scope   *) //语句块
+  | For of expr * expr * expr * stmt      //for循环
+//  | ForPrimary of stmt * expr * expr * stmt      //通常的for循环
   // 语句块内部，可以是 变量声明 或 语句的列表
 
 //语句或声明

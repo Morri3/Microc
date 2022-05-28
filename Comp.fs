@@ -200,7 +200,21 @@ let rec cStmt stmt (varEnv: VarEnv) (funEnv: FunEnv) : instr list =
 
     | Return (Some e) -> cExpr e varEnv funEnv @ [ RET(snd varEnv) ] //返回某些值
 
-
+    | For (e1, e2, e3, body) -> //for循环
+        let labbegin = newLabel () //生成begin标签
+        let labtest = newLabel () //生成test标签
+        
+        // 把for循环转换为while循环进行理解
+        cExpr e1 varEnv funEnv//先编译初始化表达式e1
+        @ [ INCSP -1 ]//释放空间
+          @ [ GOTO labtest; Label labbegin ]//跳转到test标签；begin标签开始的地方
+            @ cStmt body varEnv funEnv//编译函数体语句
+              @ cExpr e3 varEnv funEnv//编译循环后的操作表达式
+                @ [ INCSP -1 ]//释放空间
+                  @ [ Label labtest ]//test标签
+                    @ cExpr e2 varEnv funEnv//编译条件表达式e2 
+                      @ [IFNZRO labbegin]//如果e2不为0，就跳转到begin标签进行循环
+        
 //语句 或 声明
 and cStmtOrDec stmtOrDec (varEnv: VarEnv) (funEnv: FunEnv) : VarEnv * instr list =
     match stmtOrDec with
@@ -210,7 +224,7 @@ and cStmtOrDec stmtOrDec (varEnv: VarEnv) (funEnv: FunEnv) : VarEnv * instr list
         let (varEnv1,code) = allocateWithMsg Locvar (typ, x) varEnv //调用allocateWithMsg函数为局部变量分配空间
         let (code2) = cExpr (Assign (AccVar x, expr)) varEnv1 funEnv //获取表达式expr给该变量x赋值的汇编指令
         let res = code @ code2 @ [INCSP -1] //返回varEnv1这个变量环境 和 两个汇编指令列表的拼接，最后释放空间
-        (varEnv1, res)
+        (varEnv1, res)//返回环境变量和汇编指令列表
 
 
 (* 编译micro-C表达式:
@@ -261,7 +275,7 @@ and cExpr (e: expr) (varEnv: VarEnv) (funEnv: FunEnv) : instr list = //参数：
                         //LDI:取出栈顶的这个acc地址的值
           @ cExpr e varEnv funEnv //计算e表达式
             @ (match ope with //匹配操作符
-              | "+=" -> [ ADD ] @ [STI] //栈顶acc的值+e表达式的结果，然后写入栈顶进行赋值，即set s[s[sp-1]]
+              | "+=" -> [ ADD ] @ [STI] //栈顶acc的值+表达式e的结果，然后写入栈顶进行赋值，即set s[s[sp-1]]
               | "-=" -> [ SUB ] @ [STI]
               | "*=" -> [ MUL ] @ [STI]
               | "/=" -> [ DIV ] @ [STI]

@@ -5,8 +5,8 @@
     <TargetFramework>net6.0</TargetFramework>
   </PropertyGroup>
 
-  <!-- <ItemGroup>
-  <Compile Include="Machine.cs" />
-  </ItemGroup> -->
+  <ItemGroup>
+    <Compile Include="Machine.cs" />
+  </ItemGroup>
 
 </Project>

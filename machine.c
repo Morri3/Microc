@@ -185,12 +185,17 @@ int *readfile(char *filename)
 }
 
 // The machine: execute the code starting at p[pc]
-
+//p:存放程序，是数组
+//s：堆栈，保存全局变量、局部变量、中间计算结果。是调用栈
+//pc:程序计数器，指向下一条指令的地址。是寄存器
+//sp:堆栈指针。是寄存器
+//bp：栈帧基指针，保存当前栈帧(stack frame)开始地址。是寄存器
+//iargs：参数
 int execcode(int p[], int s[], int iargs[], int iargc, int /* boolean */ trace)
 {
-  int bp = -999; // Base pointer, for local variable access
-  int sp = -1;   // Stack top pointer
-  int pc = 0;    // Program counter: next instruction
+  int bp = -999; // 基指针, for local variable access
+  int sp = -1;   // 栈顶指针
+  int pc = 0;    // 程序计数器: next instruction
   for (;;)
   {
     if (trace)
@@ -198,85 +203,85 @@ int execcode(int p[], int s[], int iargs[], int iargc, int /* boolean */ trace)
     switch (p[pc++])
     {
     case CSTI:
-      s[sp + 1] = p[pc++];
-      sp++;
+      s[sp + 1] = p[pc++];//把程序中的第一个压入堆栈s
+      sp++; //堆栈指针更新到下一个栈帧
       break;
     case ADD:
-      s[sp - 1] = s[sp - 1] + s[sp];
-      sp--;
+      s[sp - 1] = s[sp - 1] + s[sp];//堆栈中上一个栈帧的值+当前栈帧的值
+      sp--;//栈帧更新到上一个栈帧
       break;
     case SUB:
-      s[sp - 1] = s[sp - 1] - s[sp];
-      sp--;
+      s[sp - 1] = s[sp - 1] - s[sp];//堆栈中上一个栈帧的值-当前栈帧的值
+      sp--;//栈帧更新到上一个栈帧
       break;
     case MUL:
-      s[sp - 1] = s[sp - 1] * s[sp];
-      sp--;
+      s[sp - 1] = s[sp - 1] * s[sp];//堆栈中上一个栈帧的值*当前栈帧的值
+      sp--;//栈帧更新到上一个栈帧
       break;
     case DIV:
-      s[sp - 1] = s[sp - 1] / s[sp];
-      sp--;
+      s[sp - 1] = s[sp - 1] / s[sp];//堆栈中上一个栈帧的值/当前栈帧的值
+      sp--;//栈帧更新到上一个栈帧
       break;
     case MOD:
-      s[sp - 1] = s[sp - 1] % s[sp];
-      sp--;
+      s[sp - 1] = s[sp - 1] % s[sp];//堆栈中上一个栈帧的值%当前栈帧的值
+      sp--;//栈帧更新到上一个栈帧
       break;
     case EQ:
-      s[sp - 1] = (s[sp - 1] == s[sp] ? 1 : 0);
-      sp--;
+      s[sp - 1] = (s[sp - 1] == s[sp] ? 1 : 0);//比较上一个栈帧的值和当前栈帧的值，若相等，上一个栈帧的值为1，否则为0
+      sp--;//栈帧更新到上一个栈帧
       break;
     case LT:
-      s[sp - 1] = (s[sp - 1] < s[sp] ? 1 : 0);
-      sp--;
+      s[sp - 1] = (s[sp - 1] < s[sp] ? 1 : 0);//比较上一个栈帧的值和当前栈帧的值，若小于，上一个栈帧的值为1，否则为0
+      sp--;//栈帧更新到上一个栈帧
       break;
     case NOT:
-      s[sp] = (s[sp] == 0 ? 1 : 0);
+      s[sp] = (s[sp] == 0 ? 1 : 0);//当前栈帧的值若为0则当前栈帧的值设置为1，否则设置为0
       break;
     case DUP:
-      s[sp + 1] = s[sp];
-      sp++;
+      s[sp + 1] = s[sp];//复制当前栈帧
+      sp++;//栈帧指针更新到下一个栈帧
       break;
     case SWAP:
     {
-      int tmp = s[sp];
+      int tmp = s[sp];//交换当前栈帧和上一个栈帧的值
       s[sp] = s[sp - 1];
       s[sp - 1] = tmp;
     }
     break;
-    case LDI: // load indirect
-      s[sp] = s[s[sp]];
+    case LDI: //间接加载
+      s[sp] = s[s[sp]];//当前栈帧的值作为下标，找到栈中指定的栈帧，把当前栈帧的值设置为那个指定栈帧的值
       break;
-    case STI: // store indirect, keep value on top
-      s[s[sp - 1]] = s[sp];
-      s[sp - 1] = s[sp];
-      sp--;
+    case STI: // 存储间接，使值在顶部
+      s[s[sp - 1]] = s[sp];//上一个栈帧的值作为下标，找到栈中指定的栈帧，把当前栈帧的值赋值给那个指定栈帧
+      s[sp - 1] = s[sp];//上一个栈帧的值更新为当前栈帧的值
+      sp--;//栈帧更新到上一个栈帧
       break;
     case GETBP:
-      s[sp + 1] = bp;
-      sp++;
+      s[sp + 1] = bp;//下一个栈帧的值是基指针
+      sp++;//栈帧更新到下一个栈帧
       break;
     case GETSP:
-      s[sp + 1] = sp;
-      sp++;
+      s[sp + 1] = sp;//下一个栈帧的值是堆栈指针
+      sp++;//栈帧更新到下一个栈帧
       break;
     case INCSP:
-      sp = sp + p[pc++];
+      sp = sp + p[pc++];//堆栈指针指向程序中pc寄存器下一个的内容
       break;
     case GOTO:
-      pc = p[pc];
+      pc = p[pc];//pc寄存器的值 为 程序中pc寄存器指向的元素的值
       break;
     case IFZERO:
-      pc = (s[sp--] == 0 ? p[pc] : pc + 1);
+      pc = (s[sp--] == 0 ? p[pc] : pc + 1);//当前栈帧的值若为0，pc就指向程序中pc寄存器指向的元素，否则pc寄存器的值+1。堆栈指针更新为上一个
       break;
     case IFNZRO:
-      pc = (s[sp--] != 0 ? p[pc] : pc + 1);
+      pc = (s[sp--] != 0 ? p[pc] : pc + 1);//当前栈帧的值若不为0，pc就指向程序中pc寄存器指向的元素，否则pc寄存器的值+1。堆栈指针更新为上一个
       break;
     case CALL:
     {
-      int argc = p[pc++];
+      int argc = p[pc++];//参数
       int i;
-      for (i = 0; i < argc; i++)   // Make room for return address
-        s[sp - i + 2] = s[sp - i]; // and old base pointer
+      for (i = 0; i < argc; i++)   // 为返回地址腾出空间
+        s[sp - i + 2] = s[sp - i]; // 和旧的基指针
       s[sp - argc + 1] = pc + 1;
       sp++;
       s[sp - argc + 1] = bp;
@@ -290,7 +295,7 @@ int execcode(int p[], int s[], int iargs[], int iargc, int /* boolean */ trace)
       int argc = p[pc++]; // Number of new arguments
       int pop = p[pc++];  // Number of variables to discard
       int i;
-      for (i = argc - 1; i >= 0; i--) // Discard variables
+      for (i = argc - 1; i >= 0; i--) // 放弃变量
         s[sp - i - pop] = s[sp - i];
       sp = sp - pop;
       pc = p[pc];
@@ -314,7 +319,7 @@ int execcode(int p[], int s[], int iargs[], int iargc, int /* boolean */ trace)
     case LDARGS:
     {
       int i;
-      for (i = 0; i < iargc; i++) // Push commandline arguments
+      for (i = 0; i < iargc; i++) //Push命令行参数
         s[++sp] = iargs[i];
     }
     break;

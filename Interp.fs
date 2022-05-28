@@ -278,6 +278,37 @@ let rec exec stmt (locEnv: locEnv) (gloEnv: gloEnv) (store: store) : store =
 
     | Return _ -> failwith "return not implemented"      // 解释器暂未实现return
 
+    | For (e1, e2, e3, body) -> //for循环
+        let (v1, store1) = eval e1 locEnv gloEnv store //计算初始化表达式的值，得到更新过的store1
+        //定义while循环的辅助函数 loop【这里store是更新过的store1】
+        let rec loop store1 =
+            let (v2, store2) = eval e2 locEnv gloEnv store1 //计算循环条件的值
+
+            if v2 <> 0 then // 如果循环条件不为0，就先执行函数体body，然后计算e3
+                let store3 = exec body locEnv gloEnv store2 //exec若是表达式的话，返回的就是一个更新过的store3
+                let (v3, store4) = eval e3 locEnv gloEnv store3 //计算表达式e3的值，返回更新过的store4
+                loop store4 //循环执行，传入的是store4
+            else // 如果循环条件为0，退出循环，返回环境store2
+                store2
+
+        loop store1 //循环执行
+
+    // | ForPrimary (stmt, e2, e3, body) -> //for循环
+    //     let (store1) = exec stmt locEnv gloEnv store //计算初始化表达式的值，得到更新过的store1
+    //     //定义while循环的辅助函数 loop【这里store是更新过的store1】
+    //     let rec loop store1 =
+    //         let (v2, store2) = eval e2 locEnv gloEnv store1 //计算循环条件的值
+
+    //         if v2 <> 0 then // 如果循环条件不为0，就先执行函数体body，然后计算e3
+    //             let store3 = exec body locEnv gloEnv store2 //exec若是表达式的话，返回的就是一个更新过的store3
+    //             let (v3, store4) = eval e3 locEnv gloEnv store3 //计算表达式e3的值，返回更新过的store4
+    //             loop store4 //循环执行，传入的是store4
+    //         else // 如果循环条件为0，退出循环，返回环境store2
+    //             store2
+
+    //     loop store1 //循环执行
+
+
 and stmtordec stmtordec locEnv gloEnv store =
     match stmtordec with
     | Stmt stmt -> (locEnv, exec stmt locEnv gloEnv store) //为语句分配空间
