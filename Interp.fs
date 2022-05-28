@@ -14,7 +14,7 @@
 
    return语句没有实现（为了简单起见），因此所有函数都应该具有返回类型void。但目前还没有
    类型检查，所以要小心。
- *)
+*)
 
 module Interp
 
@@ -26,7 +26,6 @@ open Debug
 // 环境 env 是 元组 ("name",data) 的列表 ，名称是字符串 string 值 'data 可以是任意类型
 //  名称 ---> 数据 名称与数据绑定关系的 键-值 对 ，即key-value pairs
 // [("x",9);("y",8)]: int env
-
 type 'data env = (string * 'data) list //表明环境类型可以是任意类型，环境env是列表；值也可以是任意类型
 
 //环境查找函数
@@ -285,9 +284,9 @@ and stmtordec stmtordec locEnv gloEnv store =
     | Dec (typ, x) -> allocate (typ, x) locEnv store //局部变量调用allocate函数分配空间
     | DecAndAssign (typ, x, expr) -> //局部变量初始化
         let (locEnv1 ,store1) = allocate (typ, x) locEnv store //调用allocate函数，
-                                                                                               //为类型为typ的变量x在局部环境和store上分配空间，
-                                                                                               //这里返回的locEnv1就是该变量的局部环境
-        let (loc, store2) = access (AccVar x) locEnv1 gloEnv store1 //计算x的地址和更新过的store
+                                                               //为类型为typ的变量x在局部环境和store上分配空间，
+                                                               //这里返回的locEnv1就是该变量的局部环境
+        let (loc, store2) = access (AccVar x) locEnv1 gloEnv store1 //计算左值变量x的地址和更新过的store
         let (res, store3) = eval expr locEnv gloEnv store2 //计算表达式expr，返回值和更新过的store
         (locEnv1, setSto store3 loc res) //返回局部环境locEnv，把expr的值赋值给store3在loc位置上的变量，也就是赋值给变量x
 

@@ -72,8 +72,8 @@ let isX86Instr = ref false
 
 (* 在env中绑定声明的变量并生成代码来分配它： *)
 // kind : Glovar / Locvar
-let rec allocateWithMsg (kind: int -> Var) (typ, x) (varEnv: VarEnv) =
-    let varEnv, instrs =
+let rec allocateWithMsg (kind: int -> Var) (typ, x) (varEnv: VarEnv) = //返回变量环境和汇编指令列表
+    let varEnv, instrs = //给 变量环境 和 汇编指令列表 分配空间
         allocate (kind: int -> Var) (typ, x) (varEnv: VarEnv)
 
     msg
@@ -81,7 +81,7 @@ let rec allocateWithMsg (kind: int -> Var) (typ, x) (varEnv: VarEnv) =
        + sprintf "%A\n" varEnv
        + sprintf "%A\n" instrs
 
-    (varEnv, instrs)
+    (varEnv, instrs) //返回
 
 and allocate (kind: int -> Var) (typ, x) (varEnv: VarEnv) : VarEnv * instr list =
     msg $"allocate called!{(x, typ)}"
@@ -116,22 +116,28 @@ let bindParams paras ((env, newloc): VarEnv) : VarEnv = List.fold bindParam (env
 
 (* ------------------------------------------------------------------- *)
 (* 为全局变量和函数构建环境 *)
-let makeGlobalEnvs (topdecs: topdec list) : VarEnv * FunEnv * instr list =
-    let rec addv decs varEnv funEnv =
+// let makeGlobalEnvs (topdecs: topdec list) : VarEnv * FunEnv * instr list =
+//     let rec addv decs varEnv funEnv =
 
-        msg $"\nGlobal funEnv:\n{funEnv}\n"
+//         msg $"\nGlobal funEnv:\n{funEnv}\n"
 
-        match decs with
-        | [] -> (varEnv, funEnv, [])
-        | dec :: decr ->
-            match dec with
-            | Vardec (typ, var) ->
-                let (varEnv1, code1) = allocateWithMsg Glovar (typ, var) varEnv
-                let (varEnvr, funEnvr, coder) = addv decr varEnv1 funEnv
-                (varEnvr, funEnvr, code1 @ coder)
-            | Fundec (tyOpt, f, xs, body) -> addv decr varEnv ((f, ($"{newLabel ()}_{f}", tyOpt, xs)) :: funEnv)
+//         match decs with
+//         | [] -> (varEnv, funEnv, [])
+//         | dec :: decr ->
+//             match dec with
+//             | Vardec (typ, var) -> //全局变量声明
+//                 let (varEnv1, code1) = allocateWithMsg Glovar (typ, var) varEnv //调用allocateWithMsg函数为全局变量分配空间
+//                 let (varEnvr, funEnvr, coder) = addv decr varEnv1 funEnv //在上一行得到的新变量环境中返回变量环境和函数环境
+//                 (varEnvr, funEnvr, code1 @ coder)
+//             | Fundec (tyOpt, f, xs, body) -> //全局函数声明
+//                 addv decr varEnv ((f, ($"{newLabel ()}_{f}", tyOpt, xs)) :: funEnv)
+//             | VardecAndAssign (typ, var, expr) -> //变量初始化
+//                 let (varEnv1, code1) = allocateWithMsg Glovar (typ, var) varEnv //调用allocateWithMsg函数为全局变量分配空间
+//                 let (varEnvr, funEnvr, coder) = addv decr varEnv1 funEnv //在上一行得到的新变量环境中返回变量环境和函数环境
+//                 let code2 = cAccess (AccVar x) varEnvr funEnvr
+//                 (varEnvr, funEnvr, code1 @ coder @ code2)
 
-    addv topdecs ([], 0) []
+//     addv topdecs ([], 0) []
 
 
 (*
@@ -194,10 +200,17 @@ let rec cStmt stmt (varEnv: VarEnv) (funEnv: FunEnv) : instr list =
 
     | Return (Some e) -> cExpr e varEnv funEnv @ [ RET(snd varEnv) ] //返回某些值
 
+
+//语句 或 声明
 and cStmtOrDec stmtOrDec (varEnv: VarEnv) (funEnv: FunEnv) : VarEnv * instr list =
     match stmtOrDec with
-    | Stmt stmt -> (varEnv, cStmt stmt varEnv funEnv)
-    | Dec (typ, x) -> allocateWithMsg Locvar (typ, x) varEnv
+    | Stmt stmt -> (varEnv, cStmt stmt varEnv funEnv) //语句
+    | Dec (typ, x) -> allocateWithMsg Locvar (typ, x) varEnv //调用allocateWithMsg函数为局部变量分配空间
+    | DecAndAssign (typ, x, expr) ->
+        let (varEnv1,code) = allocateWithMsg Locvar (typ, x) varEnv //调用allocateWithMsg函数为局部变量分配空间
+        let (code2) = cExpr (Assign (AccVar x, expr)) varEnv1 funEnv //获取表达式expr给该变量x赋值的汇编指令
+        let res = code @ code2 @ [INCSP -1] //返回varEnv1这个变量环境 和 两个汇编指令列表的拼接，最后释放空间
+        (varEnv1, res)
 
 
 (* 编译micro-C表达式:
@@ -332,6 +345,30 @@ and cExpr (e: expr) (varEnv: VarEnv) (funEnv: FunEnv) : instr list = //参数：
 
     | Call (f, es) -> callfun f es varEnv funEnv //函数调用
 
+(* ------------------------------------------------------------------- *)
+(* 为全局变量和函数构建环境 *)
+and makeGlobalEnvs (topdecs: topdec list) : VarEnv * FunEnv * instr list =
+    let rec addv decs varEnv funEnv =
+
+        msg $"\nGlobal funEnv:\n{funEnv}\n"
+
+        match decs with
+        | [] -> (varEnv, funEnv, [])
+        | dec :: decr ->
+            match dec with
+            | Vardec (typ, var) -> //全局变量声明
+                let (varEnv1, code1) = allocateWithMsg Glovar (typ, var) varEnv //调用allocateWithMsg函数为全局变量分配空间
+                let (varEnvr, funEnvr, coder) = addv decr varEnv1 funEnv //在上一行得到的新变量环境中返回变量环境和函数环境
+                (varEnvr, funEnvr, code1 @ coder)
+            | Fundec (tyOpt, f, xs, body) -> //全局函数声明
+                addv decr varEnv ((f, ($"{newLabel ()}_{f}", tyOpt, xs)) :: funEnv)
+            | VardecAndAssign (typ, var, expr) -> //变量初始化
+                let (varEnv1, code1) = allocateWithMsg Glovar (typ, var) varEnv //调用allocateWithMsg函数为全局变量分配空间
+                let (varEnvr, funEnvr, coder) = addv decr varEnv1 funEnv //在上一行得到的新变量环境中返回变量环境和函数环境
+                let code2 = cAccess (AccVar var) varEnvr funEnvr //获得左值变量var的汇编指令列表
+                (varEnvr, funEnvr, code1 @ coder @ code2)
+
+    addv topdecs ([], 0) []
 
 (* 生成代码以访问变量、解引用指针或索引数组。编译代码的效果是在堆栈上留下一个左值 *)
 //编译左值表达式
@@ -399,8 +436,9 @@ let cProgram (Prog topdecs) : instr list =
     let functions =
         List.choose
             (function
-            | Fundec (rTy, name, argTy, body) -> Some(compilefun (rTy, name, argTy, body))
-            | Vardec _ -> None)
+            | Fundec (rTy, name, argTy, body) -> Some(compilefun (rTy, name, argTy, body)) //函数声明
+            | Vardec _ -> None //变量声明
+            | VardecAndAssign _ -> None) //变量初始化
             topdecs
 
     let (mainlab, _, mainparams) = lookup funEnv "main"

@@ -49,6 +49,7 @@ and stmt =                           //语句
   | Block of stmtordec list          (* Block: grouping and scope   *) //语句块
   // 语句块内部，可以是 变量声明 或 语句的列表
 
+//语句或声明
 and stmtordec =
   | Dec of typ * string              (* Local variable declaration  *) //局部变量声明
   | Stmt of stmt                     (* A statement                 *) //一个语句
