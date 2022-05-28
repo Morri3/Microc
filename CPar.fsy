@@ -27,7 +27,7 @@ let third (_, _, z) = z //取第三个元素
 %token <int> CSTINT CSTBOOL           // <int> 是词元的语义值类型，布尔类型的值是0 1，故用int类型表示
 %token <string> CSTSTRING NAME        // CSTSTRING、NAME都是string类型
 
-%token CHAR ELSE IF INT NULL PRINT PRINTLN RETURN VOID WHILE FOR
+%token CHAR ELSE IF INT NULL PRINT PRINTLN RETURN VOID WHILE FOR IN DO RANGE
 %token PLUS MINUS TIMES DIV MOD       //加 减 乘 除 取余
 %token PLUSASSIGN MINUSASSIGN TIMESASSIGN DIVASSIGN MODASSIGN //复合赋值运算符+= -= *= /= %=
 %token SELFINC SELFDEC           //自增 自减
@@ -164,29 +164,30 @@ Stmt:
 ;
 
 StmtM:  /* No unbalanced if-else 数量不匹配的if-else */
-    Expr SEMI                           { Expr($1)             }     //表达式 元组
-  | RETURN SEMI                         { Return None          }     //返回 元组
-  | RETURN Expr SEMI                    { Return(Some($2))     }     //返回 表达式 元组
+    Expr SEMI                           { Expr($1)             }     //表达式
+  | RETURN SEMI                         { Return None          }     //返回 空
+  | RETURN Expr SEMI                    { Return(Some($2))     }     //返回 表达式
   | Block                               { $1                   }     //语句块
   | IF LPAR Expr RPAR StmtM ELSE StmtM  { If($3, $5, $7)       }     //if语句【包括if-else和if-elseif】
   | WHILE LPAR Expr RPAR StmtM          { While($3, $5)        }     //while循环
   | FOR LPAR Expr SEMI Expr SEMI Expr RPAR StmtM { For($3, $5, $7, $9) } //for循环
 //  | FOR LPAR StmtM Expr SEMI Expr RPAR StmtM { ForPrimary($3, $4, $6, $8) } //通常的for循环
+  | FOR LPAR Access IN RANGE LPAR Expr COMMA Expr COMMA Expr RPAR RPAR StmtM   { ForInExpr($3, $7, $9, $11, $14) }    //forinrange函数
 ;
 
 StmtU:
     IF LPAR Expr RPAR StmtM ELSE StmtU  { If($3, $5, $7)       }     //if语句【包括if-else和if-elseif】
-  | IF LPAR Expr RPAR Stmt              { If($3, $5, Block []) }     //不带else的if语句
+  | IF LPAR Expr RPAR Stmt              { If($3, $5, Block []) }     //if语句【不带else】
   | WHILE LPAR Expr RPAR StmtU          { While($3, $5)        }     //while循环
 ;
 
 Expr: 
-    Access                              { Access $1           } //取$1的右值
-  | ExprNotAccess                       { $1                  } //非左值的情况
+    Access                              { Access $1           } // 取$1的左值
+  | ExprNotAccess                       { $1                  } // 非左值的情况
 ;
   //非左值的情况
 ExprNotAccess:
-    AtExprNotAccess                     { $1                  } //不可以为左值的的基本情况
+    AtExprNotAccess                     { $1                  } // 不可以为左值的的基本情况
   | Access ASSIGN Expr                  { Assign($1, $3)      } // $1表示左值
   | NAME LPAR Exprs RPAR                { Call($1, $3)        } // 变量名(表达式)
   | NOT Expr                            { Prim1("!", $2)      } // !表达式       表达式取反

@@ -1,0 +1,9 @@
+for(int i=0;i<3;i++){
+	body
+}
+
+int i=0;
+while(i<3){
+	body
+  i++;
+}

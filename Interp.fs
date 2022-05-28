@@ -249,7 +249,7 @@ let rec exec stmt (locEnv: locEnv) (gloEnv: gloEnv) (store: store) : store =
     | While (e, body) ->           //while循环
         //定义while循环的辅助函数 loop
         let rec loop store1 =
-            //求值 循环条件,注意变更环境 store
+            //计算表达式e的值，返回更新过的store1
             let (v, store2) = eval e locEnv gloEnv store1
             // 继续循环
             if v <> 0 then
@@ -307,6 +307,26 @@ let rec exec stmt (locEnv: locEnv) (gloEnv: gloEnv) (store: store) : store =
     //             store2
 
     //     loop store1 //循环执行
+
+    | ForInExpr (acc,e1,e2, e3, body) -> //forin函数
+        let (loc, store1) = access acc locEnv gloEnv store //取变量acc1的地址和环境
+        let (v1, store2) = eval e1 locEnv gloEnv store1 //计算表达式e1，返回更新过的store2
+        let (v2, store3) = eval e2 locEnv gloEnv store2 //计算表达式e2，返回更新过的store3
+        let (v3, store4) = eval e3 locEnv gloEnv store3 //计算表达式e3，返回更新过的store4
+        
+        let rec loop step store5 = //step为步进值
+            let store6 = exec body locEnv gloEnv (setSto store5 loc step)//每次刚进入循环就执行一遍函数体body
+
+            //循环条件：当步进值为正，结束下标-(当前开始下标+步进值)大于0；当步进值为负，(当前开始下标+步进值)-结束下标大于0
+            if (v2-(step+v3) > 0 && v1<v2 && v3>0) || (step+v3-v2 > 0 && v1>v2 && v3<0) then //如果循环条件大于0，表示还在循环中
+                loop (step+v3) store6 //循环执行，传入的是store5，步进值为 (旧步进值+v3)
+            else //如果循环条件大于等于0，表示退出循环，返回环境store4
+                store6
+
+        if (v1<v2 && v3>0) || (v1>v2 && v3<0) then //进入循环，变量的初值为v1，步进值为正或负
+            loop v1 store4
+        else //不满足初始循环条件，就返回store4
+            store4
 
 
 and stmtordec stmtordec locEnv gloEnv store =

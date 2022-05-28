@@ -43,13 +43,14 @@ and access =                         //左值，存储的位置
                                                                    
 and stmt =                           //语句
   | If of expr * stmt * stmt         (* Conditional                 *) //if语句
-  | While of expr * stmt             (* While loop                  *) //while语句
+  | While of expr * stmt             (* While loop                  *) //while循环
   | Expr of expr                     (* Expression statement   e;   *) //表达式
   | Return of expr option            (* Return from method          *) //返回
-  | Block of stmtordec list          (* Block: grouping and scope   *) //语句块
+  | Block of stmtordec list          (* Block: grouping and scope   *) //语句块。语句块内部，可以是 变量声明 或 语句的列表
   | For of expr * expr * expr * stmt      //for循环
 //  | ForPrimary of stmt * expr * expr * stmt      //通常的for循环
-  // 语句块内部，可以是 变量声明 或 语句的列表
+  | ForInExpr of access * expr * expr * expr * stmt  //forin函数    for x in range(1,5,2)
+
 
 //语句或声明
 and stmtordec =
