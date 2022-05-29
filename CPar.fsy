@@ -38,7 +38,7 @@ let third (_, _, z) = z //取第三个元素
 
 %right ASSIGN             /* 最低优先级 */  // 最下面的优先级最高
 %nonassoc PRINT           //打印
-%right MINUSASSIGN PLUSASSIGN MODASSIGN TIMESASSIGN DIVASSIGN //复合赋值运算符+= -= *= /= %=
+%right MINUSASSIGN PLUSASSIGN MODASSIGN TIMESASSIGN DIVASSIGN //复合赋值运算符-= += %= *= /=
 %right QUESMARK COLON     //问号 冒号
 %left SEQOR               //逻辑或||
 %left SEQAND              //逻辑与&&
@@ -57,18 +57,18 @@ let third (_, _, z) = z //取第三个元素
 
 //下面这一段是规则段
 Main:
-    Topdecs EOF                         { Prog $1 }  // { }内是合法的F#代码
-                                        // $1是Topdecs的语义值，Prog $1返回抽象语法树根节点，即整个程序
-;                                       // 分号是规则结束符
+    Topdecs EOF                         { Prog $1 }    // { }内是合法的F#代码
+                                                       // $1是Topdecs的语义值，Prog $1返回抽象语法树根节点，即整个程序
+;                                                      // 分号是规则结束符
 
 Topdecs:
-    /* empty */                         { [] }     //可以为空
+    /* empty */                         { [] }         //可以为空
   | Topdec Topdecs                      { $1 :: $2 }   //定义
 ;
 
 Topdec: 
     Vardec SEMI                         { Vardec (fst $1, snd $1) }  // 变量声明。SEMI是分号  fst表示第一个，snd表示第二个
-  | Fundec                              { $1 }  // 函数声明
+  | Fundec                              { $1 }                       // 函数声明
   | VardecAndAssign SEMI                { VardecAndAssign (first $1,second $1,third $1) } //变量初始化
 ;
 
@@ -88,12 +88,12 @@ int (*iap)[10];  // pointer to array of 10 int    (TypP (TypA (TypI, Some 10))
 
 // 变量声明
 Vardec:
-    Type Vardesc                        { ((fst $2) $1, snd $2) }   //格式是：   变量类型 变量描述
+    Type Vardesc                        { ((fst $2) $1, snd $2) }      //格式是：   变量类型 变量描述
 ;
 
 // 变量初始化
 VardecAndAssign:
-    Type Vardesc ASSIGN Expr            { ((fst $2) $1, snd $2, $4)}  //格式是：   变量类型 变量描述 赋值符号 表达式
+    Type Vardesc ASSIGN Expr            { ((fst $2) $1, snd $2, $4)}   //格式是：   变量类型 变量描述 赋值符号 表达式
 ;
 
 /*
@@ -141,7 +141,7 @@ Paramdecs:
 
 Paramdecs1:
     Vardec                              { [$1]     }   //变量声明
-  | Vardec COMMA Paramdecs1             { $1 :: $3 }   //把变量添加到参数列表上       ::表示把值添加到列表头部
+  | Vardec COMMA Paramdecs1             { $1 :: $3 }   //把变量添加到参数列表上     ::表示把值添加到列表头部
 ;
 
 // 花括号中的 语句块
@@ -164,16 +164,16 @@ Stmt:
 ;
 
 StmtM:  /* No unbalanced if-else 数量不匹配的if-else */
-    Expr SEMI                           { Expr($1)             }     //表达式
-  | RETURN SEMI                         { Return None          }     //返回 空
-  | RETURN Expr SEMI                    { Return(Some($2))     }     //返回 表达式
-  | Block                               { $1                   }     //语句块
-  | IF LPAR Expr RPAR StmtM ELSE StmtM  { If($3, $5, $7)       }     //if语句【包括if-else和if-elseif】
-  | WHILE LPAR Expr RPAR StmtM          { While($3, $5)        }     //while循环
+    Expr SEMI                           { Expr($1)             }         //表达式
+  | RETURN SEMI                         { Return None          }         //返回 空
+  | RETURN Expr SEMI                    { Return(Some($2))     }         //返回 表达式
+  | Block                               { $1                   }         //语句块
+  | IF LPAR Expr RPAR StmtM ELSE StmtM  { If($3, $5, $7)       }         //if语句【包括if-else和if-elseif】
+  | WHILE LPAR Expr RPAR StmtM          { While($3, $5)        }         //while循环
   | FOR LPAR Expr SEMI Expr SEMI Expr RPAR StmtM { For($3, $5, $7, $9) } //for循环
 //  | FOR LPAR StmtM Expr SEMI Expr RPAR StmtM { ForPrimary($3, $4, $6, $8) } //通常的for循环
   | FOR LPAR Access IN RANGE LPAR Expr COMMA Expr COMMA Expr RPAR RPAR StmtM   { ForInExpr($3, $7, $9, $11, $14) }    //forinrange函数
-  | IF LPAR Expr RPAR StmtM             { IfWithoutElse($3, $5)       }     //if语句【不带else】
+  | IF LPAR Expr RPAR StmtM             { IfWithoutElse($3, $5)       }  //if语句【不带else】
 ;
 
 StmtU:
@@ -186,18 +186,19 @@ Expr:
     Access                              { Access $1           } // 取$1的左值
   | ExprNotAccess                       { $1                  } // 非左值的情况
 ;
-  //非左值的情况
+
+//非左值的情况
 ExprNotAccess:
     AtExprNotAccess                     { $1                  } // 不可以为左值的的基本情况
   | Access ASSIGN Expr                  { Assign($1, $3)      } // $1表示左值
   | NAME LPAR Exprs RPAR                { Call($1, $3)        } // 变量名(表达式)
-  | NOT Expr                            { Prim1("!", $2)      } // !表达式       表达式取反
+  | NOT Expr                            { Prim1("!", $2)      } // !表达式    表达式取反
   | PRINT Expr                          { Prim1("printi", $2) } // 打印表达式
   | PRINTLN                             { Prim1("printc", nl) } // 打印换行
-  | SELFINC Access                      { PreInc $2       }  // 前置自增++a
-  | SELFDEC Access                      { PreDec $2       }  // 前置自减--a
-  | Access SELFINC                      { NextInc $1      }  // 后置自增a++
-  | Access SELFDEC                      { NextDec $1      }  // 后置自减a--
+  | SELFINC Access                      { PreInc $2       }     // 前置自增++a
+  | SELFDEC Access                      { PreDec $2       }     // 前置自减--a
+  | Access SELFINC                      { NextInc $1      }     // 后置自增a++
+  | Access SELFDEC                      { NextDec $1      }     // 后置自减a--
   | Expr PLUS  Expr                     { Prim2("+",  $1, $3) } // 表达式+表达式
   | Expr MINUS Expr                     { Prim2("-",  $1, $3) } // 表达式-表达式
   | Expr TIMES Expr                     { Prim2("*",  $1, $3) } // 表达式*表达式
@@ -230,11 +231,11 @@ AtExprNotAccess:
 ;
 
 Access:    //可以为左值的情况
-    NAME                                { AccVar $1           }  // 变量 x
-  | LPAR Access RPAR                    { $2                  }  // 括号中的变量 (x)
-  | TIMES Access                        { AccDeref (Access $2)}  // 指针 *x 
-  | TIMES AtExprNotAccess               { AccDeref $2         }  // 指针 不可以为左值的基本情况   如*&x
-  | Access LBRACK Expr RBRACK           { AccIndex($1, $3)    }  // 左值(表达式)     这个是递归调用
+    NAME                                { AccVar $1           } // 变量 x
+  | LPAR Access RPAR                    { $2                  } // 括号中的变量 (x)
+  | TIMES Access                        { AccDeref (Access $2)} // 指针 *x 
+  | TIMES AtExprNotAccess               { AccDeref $2         } // 指针 不可以为左值的基本情况   如*&x
+  | Access LBRACK Expr RBRACK           { AccIndex($1, $3)    } // 左值(表达式)     这个是递归调用
 ;
 
 Exprs:   //多个表达式
@@ -248,10 +249,10 @@ Exprs1:
 ;
 
 Const:  //常量
-    CSTINT                              { $1       } //int类型常量
-  | CSTBOOL                             { $1       } //布尔类型常量
-  | MINUS CSTINT                        { - $2     } //负数常量
-  | NULL                                { -1       } //null
+    CSTINT                              { $1       }  //int类型常量
+  | CSTBOOL                             { $1       }  //布尔类型常量
+  | MINUS CSTINT                        { - $2     }  //负数常量
+  | NULL                                { -1       }  //null
 ;
 
 Type:  //变量

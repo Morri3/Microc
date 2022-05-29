@@ -92,12 +92,12 @@ let keyword s =
     | "true"    -> CSTBOOL 1
     | "void"    -> VOID
     | "while"   -> WHILE
-    | "for"     -> FOR  //for循环
-    | "in"      -> IN //in
-    | "do"      -> DO //do
-    | "range"   -> RANGE //range
-    | _         -> NAME s   // 缺省情况，是标识符的名字，如 函数名，变量名 等
-                            // 当所有的关键字没有匹配成功时，则当成标识符
+    | "for"     -> FOR       //for循环
+    | "in"      -> IN        //in
+    | "do"      -> DO        //do
+    | "range"   -> RANGE     //for-in-range
+    | _         -> NAME s    // 缺省情况，是标识符的名字，如 函数名，变量名 等
+                             // 当所有的关键字没有匹配成功时，则当成标识符
 // 字符串转义符处理函数
 let cEscape s = 
     match s with 
@@ -120,7 +120,7 @@ rule Token = parse          // 每个 规则rule 会生成为一个函数，函�
                              // 缓冲区的读写指针后移，将匹配到的内容从lexbuf读出
 
   | '\n'            { lexbuf.EndPos <- lexbuf.EndPos.NextLine; Token lexbuf } // 换行处理
-                                                                             // EndPos 是内置类型 Position的实例，表示当前行的结束位置
+                                                                              // EndPos 是内置类型 Position的实例，表示当前行的结束位置
   | ['0'-'9']+      { CSTINT (System.Int32.Parse (lexemeAsString lexbuf)) }   //一个及以上的数字
                             //  System.Int32.Parse 将 字符串转换为 int 类型
                             // 在 CPar 中  词元CSTINT 的语义值的类型是int  %token <int> CSTINT
@@ -132,28 +132,29 @@ rule Token = parse          // 每个 规则rule 会生成为一个函数，函�
   
   | ['a'-'z''A'-'Z']['a'-'z''A'-'Z''0'-'9']*    //一个字母开头的可包含数字的字符串
                     { keyword (lexemeAsString lexbuf) } //标识符处理
-                                                       //先查是否是关键字，是则返回对应关键字的Token
-  | '+'             { PLUS }  // 返回Token PLUS 给调用词法分析器的程序，通常是Parser    //加
-                              // 此时lexbuf是 匹配 '+'完成后，后续的内容 
+                                                        //先查是否是关键字，是则返回对应关键字的Token
+  | '+'             { PLUS }    //加
+                                // 返回Token PLUS 给调用词法分析器的程序，通常是Parser
+                                // 此时lexbuf是 匹配 '+'完成后，后续的内容 
   | '-'             { MINUS }   //减
   | '*'             { TIMES }   //乘
-  | '/'             { DIV }    //除
-  | '%'             { MOD }    //取余
+  | '/'             { DIV }     //除
+  | '%'             { MOD }     //取余
   | "++"            { SELFINC }    //前置自增，后置自增
   | "--"            { SELFDEC }    //前置自减，后置自减
-  | '='             { ASSIGN }   //赋值
+  | '='             { ASSIGN }     //赋值
   | "=="            { EQ }    //相等
   | "!="            { NE }    //不相等
   | '>'             { GT }    //大于
   | '<'             { LT }    //小于
   | ">="            { GE }    //大于等于
   | "<="            { LE }    //小于等于
-  | '?'             { QUESMARK } //问号
-  | ':'             { COLON } //冒号
-  | "/="            { DIVASSIGN } //复合赋值运算符/=
+  | '?'             { QUESMARK }    //问号【用于三目运算符】
+  | ':'             { COLON }       //冒号【用于三目运算符】
+  | "/="            { DIVASSIGN }   //复合赋值运算符/=
   | "*="            { TIMESASSIGN } //复合赋值运算符*=
-  | "%="            { MODASSIGN } //复合赋值运算符%=
-  | "+="            { PLUSASSIGN } //复合赋值运算符+=
+  | "%="            { MODASSIGN }   //复合赋值运算符%=
+  | "+="            { PLUSASSIGN }  //复合赋值运算符+=
   | "-="            { MINUSASSIGN } //复合赋值运算符-=
   | "||"            { SEQOR }    //或
   | "&&"            { SEQAND }   //与
@@ -179,7 +180,7 @@ rule Token = parse          // 每个 规则rule 会生成为一个函数，函�
 
 and Comment = parse
    | "/*"           { Comment lexbuf; Comment lexbuf }  // 注释的嵌套调用处理
-   | "*/"           { () }                           // 注释处理结束
+   | "*/"           { () }                              // 注释处理结束
    | "(* "           { Comment lexbuf; Comment lexbuf }
    | "*)"           { () }
    | '\n'           { lexbuf.EndPos <- lexbuf.EndPos.NextLine; Comment lexbuf } //注释跨行处理，A<-B表示把内容A替换为B
@@ -209,6 +210,6 @@ and String chars = parse         //处理字符串
   | ['\n' '\r']  { failwith "Lexer error: newline in string" }  //字符串中出现回车
 
   | ['\000'-'\031' '\127' '\255']    
-      { failwith "Lexer error: invalid character in string" }  // 字符串中出现 ASCII 控制字符
+      { failwith "Lexer error: invalid character in string" }   // 字符串中出现 ASCII 控制字符
   | _
-      { String (char (lexbuf.LexemeChar 0) :: chars) lexbuf } // 将读到的第1个字符加到临时的chars数组
+      { String (char (lexbuf.LexemeChar 0) :: chars) lexbuf }   // 将读到的第1个字符加到临时的chars数组

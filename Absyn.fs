@@ -19,7 +19,7 @@ type typ =                           // 类型
   | TypA of typ * int option         (* Array type                  *) //数组类型
   | TypP of typ                      (* Pointer type                *) //指针类型
                                                                    
-and expr =                           // 表达式，右值                                                
+and expr =                           // 表达式，右值
   | Access of access                 (* x    or  *p    or  a[e]     *) //访问左值（右值）
   | Assign of access * expr          (* x=e  or  *p=e  or  a[e]=e   *) //赋值语句
   | Addr of access                   (* &x   or  &*p   or  &a[e]    *) //取地址
@@ -29,12 +29,12 @@ and expr =                           // 表达式，右值
   | Andalso of expr * expr           (* Sequential and              *) //与
   | Orelse of expr * expr            (* Sequential or               *) //或
   | Call of string * expr list       (* Function call f(...)        *) //函数调用
-  | PreInc of access                                           //前置自增 ++i or ++a[e]
-  | PreDec of access                                           //前置自减 --i or --a[e]
-  | NextInc of access                                          //后置自增 i++ or a[e]++
-  | NextDec of access                                          //后置自减 i-- or a[e]--
+  | PreInc of access                             //前置自增 ++i or ++a[e]
+  | PreDec of access                             //前置自减 --i or --a[e]
+  | NextInc of access                            //后置自增 i++ or a[e]++
+  | NextDec of access                            //后置自减 i-- or a[e]--
   | TernaryOperator of expr * expr * expr        //三目运算符 ? :
-  | Prim3 of string * access * expr        //复合赋值运算符
+  | Prim3 of string * access * expr              //复合赋值运算符
                                                                    
 and access =                         //左值，存储的位置                                            
   | AccVar of string                 (* Variable access        x    *) //变量
@@ -47,23 +47,23 @@ and stmt =                           //语句
   | Expr of expr                     (* Expression statement   e;   *) //表达式
   | Return of expr option            (* Return from method          *) //返回
   | Block of stmtordec list          (* Block: grouping and scope   *) //语句块。语句块内部，可以是 变量声明 或 语句的列表
-  | For of expr * expr * expr * stmt      //for循环
-//  | ForPrimary of stmt * expr * expr * stmt      //通常的for循环
-  | ForInExpr of access * expr * expr * expr * stmt  //forin函数    for x in range(1,5,2)
-  | IfWithoutElse of expr * stmt        //if语句【不带else】
+  | For of expr * expr * expr * stmt                      //for循环
+//  | ForPrimary of stmt * expr * expr * stmt             //通常的for循环
+  | ForInExpr of access * expr * expr * expr * stmt       //forin函数    for x in range(1,5,2)
+  | IfWithoutElse of expr * stmt                          //if语句【不带else】
 
 
 //语句或声明
 and stmtordec =
   | Dec of typ * string              (* Local variable declaration  *) //局部变量声明
   | Stmt of stmt                     (* A statement                 *) //一个语句
-  | DecAndAssign of typ * string * expr  //局部变量初始化（声明的时候就赋值）
+  | DecAndAssign of typ * string * expr                        //局部变量初始化（声明的时候就赋值）
 
 // 顶级声明 可以是函数声明或变量声明
 and topdec = 
   | Fundec of typ option * string * (typ * string) list * stmt //函数声明
-  | Vardec of typ * string //变量声明
-  | VardecAndAssign of typ * string * expr //全局变量初始化（声明的时候就赋值）
+  | Vardec of typ * string                                     //变量声明
+  | VardecAndAssign of typ * string * expr                     //全局变量初始化（声明的时候就赋值）
 
 // 程序是顶级声明的列表
 and program = 

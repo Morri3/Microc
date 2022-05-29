@@ -76,8 +76,8 @@ _L1_main_pro_2:
 	pop r10
 	add rax, r10
 	push rax
-	;CSTI 1
-	push 1
+	;CSTI 0
+	push 0
 	;STI
 	pop r10
 	pop rax
@@ -173,13 +173,8 @@ L3:
 	pop rax
 	mov rax,[rax]
 	push rax
-	;CSTI 5
-	push 5
-	;SWAP
-	pop rax
-	pop r10
-	push rax
-	push r10
+	;CSTI 4
+	push 4
 	;LT
 	pop rax
 	pop r10
@@ -190,10 +185,6 @@ L3:
 .Lasm0:
 	push 1
 .Lasm1:
-	;NOT
-	pop rax
-	xor rax, 1
-	push rax
 	;IFNZRO L2
 	pop rax
 	cmp rax,0
