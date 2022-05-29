@@ -214,7 +214,44 @@ let rec cStmt stmt (varEnv: VarEnv) (funEnv: FunEnv) : instr list =
                   @ [ Label labtest ]//test标签
                     @ cExpr e2 varEnv funEnv//编译条件表达式e2 
                       @ [IFNZRO labbegin]//如果e2不为0，就跳转到begin标签进行循环
+
+    | ForInExpr (acc,e1,e2, e3, body) -> //forin函数
+        //把Forinrange函数转为For循环进行理解
         
+        let expr1=Assign (acc,e1)//左值acc初始值是e1，这也是forinrange的初始化表达式
+        let expr21=Prim2("<",Access(acc),e2)//左值acc是否小于e2，就是正序的条件表达式
+        let expr22=Prim2(">",Access(acc),e2)//左值acc是否大于e2，就是逆序的条件表达式
+        let expr3=Prim3("+=",acc,e3)//循环后的操作表达式
+
+        let judge1=Prim2("<",Access(acc),e2)//左值acc小于e2
+        let judge2=Prim2(">",e3,CstI 0)//e3大于0
+        let j1=Andalso(judge1,judge2) //正序的情况
+
+        let judge3=Prim2(">",Access(acc),e2)//左值acc大于e2
+        let judge4=Prim2("<",e3,CstI 0)//e3小于0
+        let j2=Andalso(judge3,judge4) //逆序的情况
+
+        if j1 <> (CstI 0) then
+            cStmt (For (expr1, expr21, expr3, body)) varEnv funEnv
+        else
+            if j2 <> (CstI 0) then
+                cStmt (For (expr1, expr22, expr3, body)) varEnv funEnv
+            else
+                cStmt (Expr(CstI 0)) varEnv funEnv
+
+    | IfWithoutElse (e, stmt1) -> //if语句【不带else】
+        let labelse = newLabel () //生成else语句的标签
+        let labend = newLabel () //生成end语句的标签
+
+        cExpr e varEnv funEnv //编译表达式e
+        @ [ IFZERO labelse ] //如果表达式e等于0，跳到else标签
+          @ cStmt stmt1 varEnv funEnv //编译语句stmt1
+            @ [ GOTO labend ] //跳转到end标签
+              @ [ Label labelse ] //else标签开始的地方
+                //这里与if-else区别：这里没有编译语句stmt2
+                @ [ Label labend ] //连上end标签，编译结束
+
+
 //语句 或 声明
 and cStmtOrDec stmtOrDec (varEnv: VarEnv) (funEnv: FunEnv) : VarEnv * instr list =
     match stmtOrDec with
@@ -293,7 +330,8 @@ and cExpr (e: expr) (varEnv: VarEnv) (funEnv: FunEnv) : instr list = //参数：
               @ [ Label labelse ] //else标签开始的地方
                 @ cExpr e3 varEnv funEnv @ [ Label labend ] //编译e3表达式，并连上end标签，编译结束
 
-    | PreInc acc -> cAccess acc varEnv funEnv @ [ DUP; LDI; CSTI 1; ADD; STI ]//前置自增
+    | PreInc acc ->
+        cAccess acc varEnv funEnv @ [ DUP; LDI; CSTI 1; ADD; STI ]//前置自增
                                                         //先编译左值表达式acc，得到acc的地址
                                                         //DUP:复制栈顶的acc地址，现在栈中有两个
                                                         //LDI:取出栈顶的这个acc地址的值
@@ -301,7 +339,8 @@ and cExpr (e: expr) (varEnv: VarEnv) (funEnv: FunEnv) : instr list = //参数：
                                                         //ADD:栈顶的acc地址的值+1
                                                         //STI:将 上一步+1后的值 写入栈顶，即set s[s[sp-1]]
 
-    | PreDec acc -> cAccess acc varEnv funEnv @ [ DUP; LDI; CSTI 1; SUB; STI ]//前置自减
+    | PreDec acc ->
+        cAccess acc varEnv funEnv @ [ DUP; LDI; CSTI 1; SUB; STI ]//前置自减
                                                         //先编译左值表达式acc，得到acc的地址
                                                         //DUP:复制栈顶的acc地址，现在栈中有两个
                                                         //LDI:取出栈顶的这个acc地址的值
@@ -309,7 +348,8 @@ and cExpr (e: expr) (varEnv: VarEnv) (funEnv: FunEnv) : instr list = //参数：
                                                         //SUB:栈顶的acc地址的值-1
                                                         //STI:将 上一步-1后的值 写入栈顶，即set s[s[sp-1]]
 
-    | NextInc acc -> cAccess acc varEnv funEnv @ [ DUP; LDI; SWAP; DUP; LDI; CSTI 1; ADD; STI ; INCSP -1]//后置自增
+    | NextInc acc ->
+        cAccess acc varEnv funEnv @ [ DUP; LDI; SWAP; DUP; LDI; CSTI 1; ADD; STI ; INCSP -1]//后置自增
                                                         //先编译左值表达式acc，得到acc的地址
                                                         //DUP:复制栈顶的acc地址，现在栈中有两个
                                                         //LDI:将复制后的栈顶的acc地址的值入栈，即s[sp]=s[s[sp]]
@@ -321,7 +361,8 @@ and cExpr (e: expr) (varEnv: VarEnv) (funEnv: FunEnv) : instr list = //参数：
                                                         //STI:将 上一步+1后的值 写入栈顶，即set s[s[sp-1]]，因为s[sp]=s[s[sp]]，故也就是把新值赋值给一开始的acc
                                                         //INCSP -1:释放空间
 
-    | NextDec acc -> cAccess acc varEnv funEnv @ [ DUP; LDI; SWAP; DUP; LDI; CSTI 1; SUB; STI ; INCSP -1]//后置自减
+    | NextDec acc -> 
+        cAccess acc varEnv funEnv @ [ DUP; LDI; SWAP; DUP; LDI; CSTI 1; SUB; STI ; INCSP -1]//后置自减
                                                         //先编译左值表达式acc，得到acc的地址
                                                         //DUP:复制栈顶的acc地址，现在栈中有两个
                                                         //LDI:将复制后的栈顶的acc地址的值入栈，即s[sp]=s[s[sp]]

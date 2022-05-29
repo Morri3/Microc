@@ -50,6 +50,7 @@ and stmt =                           //语句
   | For of expr * expr * expr * stmt      //for循环
 //  | ForPrimary of stmt * expr * expr * stmt      //通常的for循环
   | ForInExpr of access * expr * expr * expr * stmt  //forin函数    for x in range(1,5,2)
+  | IfWithoutElse of expr * stmt        //if语句【不带else】
 
 
 //语句或声明

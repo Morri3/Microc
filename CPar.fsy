@@ -173,6 +173,7 @@ StmtM:  /* No unbalanced if-else 数量不匹配的if-else */
   | FOR LPAR Expr SEMI Expr SEMI Expr RPAR StmtM { For($3, $5, $7, $9) } //for循环
 //  | FOR LPAR StmtM Expr SEMI Expr RPAR StmtM { ForPrimary($3, $4, $6, $8) } //通常的for循环
   | FOR LPAR Access IN RANGE LPAR Expr COMMA Expr COMMA Expr RPAR RPAR StmtM   { ForInExpr($3, $7, $9, $11, $14) }    //forinrange函数
+  | IF LPAR Expr RPAR StmtM             { IfWithoutElse($3, $5)       }     //if语句【不带else】
 ;
 
 StmtU:

@@ -328,6 +328,13 @@ let rec exec stmt (locEnv: locEnv) (gloEnv: gloEnv) (store: store) : store =
         else //不满足初始循环条件，就返回store4
             store4
 
+    | IfWithoutElse (e, stmt1) ->   //if语句
+        let (v, store1) = eval e locEnv gloEnv store
+
+        if v <> 0 then
+            exec stmt1 locEnv gloEnv store1 //True分支
+        else
+            exec  (Expr(Prim2("<",CstI 1,CstI 0))) locEnv gloEnv store1
 
 and stmtordec stmtordec locEnv gloEnv store =
     match stmtordec with
