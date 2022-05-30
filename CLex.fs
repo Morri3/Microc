@@ -96,7 +96,7 @@ let keyword s =
     | "while"   -> WHILE
     | "for"     -> FOR       //for循环
     | "in"      -> IN        //in
-    | "do"      -> DO        //do
+    | "do"      -> DO        //dowhile循环
     | "range"   -> RANGE     //for-in-range
     | _         -> NAME s    // 缺省情况，是标识符的名字，如 函数名，变量名 等
                              // 当所有的关键字没有匹配成功时，则当成标识符

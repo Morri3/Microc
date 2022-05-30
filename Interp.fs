@@ -249,7 +249,7 @@ let rec exec stmt (locEnv: locEnv) (gloEnv: gloEnv) (store: store) : store =
     | While (e, body) ->           //while循环
         //定义while循环的辅助函数 loop
         let rec loop store1 =
-            //计算表达式e的值，返回更新过的store1
+            //计算表达式e的值，返回更新过的store2
             let (v, store2) = eval e locEnv gloEnv store1
             // 继续循环
             if v <> 0 then
@@ -335,6 +335,22 @@ let rec exec stmt (locEnv: locEnv) (gloEnv: gloEnv) (store: store) : store =
             exec stmt1 locEnv gloEnv store1 //True分支
         else
             exec  (Expr(Prim2("<",CstI 1,CstI 0))) locEnv gloEnv store1
+    
+    | DoWhile (stmt1, e) -> //dowhile循环
+        let store1=exec stmt1 locEnv gloEnv store//先执行一遍函数体body
+
+        //定义dowhile循环的辅助函数 loop
+        let rec loop store1 =
+            //计算表达式e的值，返回更新过的store2
+            let (v, store2) = eval e locEnv gloEnv store1
+            // 继续循环
+            if v <> 0 then
+                loop (exec stmt1 locEnv gloEnv store2)
+            // 退出循环，返回环境store2
+            else
+                store2
+
+        loop store1
 
 and stmtordec stmtordec locEnv gloEnv store =
     match stmtordec with
