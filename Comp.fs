@@ -261,6 +261,15 @@ let rec cStmt stmt (varEnv: VarEnv) (funEnv: FunEnv) : instr list =
           @ [ Label labtest ] //test标签
             @ cExpr e varEnv funEnv @ [ IFNZRO labbegin ] //编译表达式e；如果不等于0跳转到begin，实现循环
 
+    | DoUntil (stmt1, e) -> //dountil循环
+        let labbegin = newLabel () //生成begin标签
+        let labtest = newLabel () //生成test标签
+
+        cStmt stmt1 varEnv funEnv //先编译语句stmt
+        @ [ GOTO labtest; Label labbegin ] //跳转到test标签；begin标签开始的地方
+        @ cStmt stmt1 varEnv funEnv //编译语句stmt
+          @ [ Label labtest ] //test标签
+            @ cExpr e varEnv funEnv @ [ IFZERO labbegin ] //编译表达式e；如果等于0跳转到begin，实现循环
 
 
 //语句 或 声明

@@ -49,6 +49,7 @@ type token =
   | IN
   | DO
   | RANGE
+  | UNTIL
   | CSTSTRING of (string)
   | NAME of (string)
   | CSTINT of (int)
@@ -102,6 +103,7 @@ type tokenId =
     | TOKEN_IN
     | TOKEN_DO
     | TOKEN_RANGE
+    | TOKEN_UNTIL
     | TOKEN_CSTSTRING
     | TOKEN_NAME
     | TOKEN_CSTINT
