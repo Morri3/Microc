@@ -53,6 +53,8 @@ and stmt =                           //语句
   | IfWithoutElse of expr * stmt                          //if语句【不带else】
   | DoWhile of stmt * expr                                //dowhile循环
   | DoUntil of stmt * expr                                //dountil循环
+  | Switch of expr * stmt list                            //switch
+  | Case of expr * stmt                                   //case
 
 //语句或声明
 and stmtordec =

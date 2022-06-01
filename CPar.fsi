@@ -50,6 +50,8 @@ type token =
   | DO
   | RANGE
   | UNTIL
+  | SWITCH
+  | CASE
   | CSTSTRING of (string)
   | NAME of (string)
   | CSTINT of (int)
@@ -104,6 +106,8 @@ type tokenId =
     | TOKEN_DO
     | TOKEN_RANGE
     | TOKEN_UNTIL
+    | TOKEN_SWITCH
+    | TOKEN_CASE
     | TOKEN_CSTSTRING
     | TOKEN_NAME
     | TOKEN_CSTINT
@@ -125,6 +129,7 @@ type nonTerminalId =
     | NONTERM_StmtOrDecSeq
     | NONTERM_Stmt
     | NONTERM_StmtM
+    | NONTERM_CaseStmts
     | NONTERM_StmtU
     | NONTERM_Expr
     | NONTERM_ExprNotAccess

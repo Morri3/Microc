@@ -334,7 +334,7 @@ let rec exec stmt (locEnv: locEnv) (gloEnv: gloEnv) (store: store) : store =
         if v <> 0 then
             exec stmt1 locEnv gloEnv store1 //True分支
         else
-            exec  (Expr(Prim2("<",CstI 1,CstI 0))) locEnv gloEnv store1
+            exec (Expr(Prim2("<",CstI 1,CstI 0))) locEnv gloEnv store1 //else分支
     
     | DoWhile (stmt1, e) -> //dowhile循环
         let store1=exec stmt1 locEnv gloEnv store//先执行一遍函数体body
@@ -367,6 +367,25 @@ let rec exec stmt (locEnv: locEnv) (gloEnv: gloEnv) (store: store) : store =
                 loop (exec stmt1 locEnv gloEnv store2)
 
         loop store1
+
+    | Switch (e,stmt1) -> //switchcase
+        let (v,store1)=eval e locEnv gloEnv store//执行switch表达式
+
+        //定义switch辅助函数body
+        let rec body list = 
+            match list with
+            | Case(e2, stmt2) :: stmts -> //e2是常量表达式，stmt2是当前匹配的case语句，stmts是未匹配的case语句列表
+                let (v2,store2)=eval e2 locEnv gloEnv store1//执行语句case语句中的表达式
+
+                //和switch表达式进行比较
+                if v = v2 then//匹配case语句的条件
+                    exec stmt2 locEnv gloEnv store2//执行
+                else//不匹配case语句的条件
+                    body stmts//继续进行匹配
+
+            | _ -> store1 //未匹配
+
+        body stmt1
 
 and stmtordec stmtordec locEnv gloEnv store =
     match stmtordec with

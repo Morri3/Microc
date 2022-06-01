@@ -27,7 +27,7 @@ let third (_, _, z) = z //取第三个元素
 %token <int> CSTINT CSTBOOL           // <int> 是词元的语义值类型，布尔类型的值是0 1，故用int类型表示
 %token <string> CSTSTRING NAME        // CSTSTRING、NAME都是string类型
 
-%token CHAR ELSE IF INT NULL PRINT PRINTLN RETURN VOID WHILE FOR IN DO RANGE UNTIL
+%token CHAR ELSE IF INT NULL PRINT PRINTLN RETURN VOID WHILE FOR IN DO RANGE UNTIL SWITCH CASE
 %token PLUS MINUS TIMES DIV MOD       //加 减 乘 除 取余
 %token PLUSASSIGN MINUSASSIGN TIMESASSIGN DIVASSIGN MODASSIGN //复合赋值运算符+= -= *= /= %=
 %token SELFINC SELFDEC           //自增 自减
@@ -176,6 +176,13 @@ StmtM:  /* No unbalanced if-else 数量不匹配的if-else */
   | IF LPAR Expr RPAR StmtM             { IfWithoutElse($3, $5)}         //if语句【不带else】
   | DO StmtM WHILE LPAR Expr RPAR SEMI     { DoWhile($2, $5)      }         //dowhile循环
   | DO StmtM UNTIL LPAR Expr RPAR SEMI     { DoUntil($2, $5)      }         //dountil循环
+  | SWITCH LPAR Expr RPAR LBRACE CaseStmts RBRACE { Switch($3, $6) }        //switch
+;
+
+//case语句
+CaseStmts:
+    CASE AtExprNotAccess COLON StmtM       { [Case($2, $4)]       }         //单个case语句
+  | CASE AtExprNotAccess COLON StmtM CaseStmts  { [Case($2, $4)] @ $5  }    //多个case语句
 ;
 
 StmtU:
