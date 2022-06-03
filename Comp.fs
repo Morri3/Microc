@@ -296,7 +296,7 @@ let rec cStmt stmt (varEnv: VarEnv) (funEnv: FunEnv) (endStack: EndStack ): inst
 
     | Switch (e, stmt1) -> //switch语句
         
-        //定义辅助函数loop
+        //定义辅助函数cases
         let rec cases stmt1 =
             match stmt1 with
             | Case(e2, stmt2) :: stmts -> //匹配到case语句
