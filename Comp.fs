@@ -66,7 +66,7 @@ type VarEnv = (Var * typ) Env * int
 type Paramdecs = (typ * string) list
 
 type FunEnv = (label * typ option * Paramdecs) Env
-
+type EndStack = label list
 let isX86Instr = ref false
 
 
@@ -150,7 +150,27 @@ let x86patch code =
     else
         code 
 
+let makeGlobalEnvs (topdecs: topdec list) : VarEnv * FunEnv * instr list =
+    let rec addv decs varEnv funEnv =
 
+        msg $"\nGlobal funEnv:\n{funEnv}\n"
+
+        match decs with
+        | [] -> (varEnv, funEnv, [])
+        | dec :: decr ->
+            match dec with
+            | Vardec (typ, var) ->
+                let (varEnv1, code1) = allocateWithMsg Glovar (typ, var) varEnv
+                let (varEnvr, funEnvr, coder) = addv decr varEnv1 funEnv
+                (varEnvr, funEnvr, code1 @ coder)
+            | Fundec (tyOpt, f, xs, body) -> addv decr varEnv ((f, ($"{newLabel ()}_{f}", tyOpt, xs)) :: funEnv)
+
+    addv topdecs ([], 0) []
+
+let popEndStack endStack = 
+    match endStack with
+        | labend :: labels -> labend
+        | []        -> failwith "break 无作用域"
 (* ------------------------------------------------------------------- *)
 (* 编译micro-C语句:
    * stmt    是要编译的语句
@@ -158,7 +178,7 @@ let x86patch code =
    * funEnv  是全局函数环境
 *)
 //编译语句
-let rec cStmt stmt (varEnv: VarEnv) (funEnv: FunEnv) : instr list =
+let rec cStmt stmt (varEnv: VarEnv) (funEnv: FunEnv) (endStack: EndStack ): instr list =
     match stmt with
     | If (e, stmt1, stmt2) ->
         let labelse = newLabel () //生成else语句的标签
@@ -170,7 +190,9 @@ let rec cStmt stmt (varEnv: VarEnv) (funEnv: FunEnv) : instr list =
             @ [ GOTO labend ] //跳转到end标签
               @ [ Label labelse ] //else标签开始的地方
                 @ cStmt stmt2 varEnv funEnv @ [ Label labend ] //编译语句stmt2，并连上end标签，编译结束
-
+    | Break ->
+        let labend =  endStack.[0]
+        [GOTO labend]
     | While (e, body) ->
         let labbegin = newLabel () //生成begin标签
         let labtest = newLabel () //生成test标签

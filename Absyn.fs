@@ -55,6 +55,7 @@ and stmt =                           //语句
   | DoUntil of stmt * expr                                //dountil循环
   | Switch of expr * stmt list                            //switch
   | Case of expr * stmt                                   //case
+  | Break
 
 //语句或声明
 and stmtordec =

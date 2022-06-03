@@ -52,6 +52,7 @@ type token =
   | UNTIL
   | SWITCH
   | CASE
+  | BREAK
   | CSTSTRING of (string)
   | NAME of (string)
   | CSTINT of (int)
@@ -108,6 +109,7 @@ type tokenId =
     | TOKEN_UNTIL
     | TOKEN_SWITCH
     | TOKEN_CASE
+    | TOKEN_BREAK
     | TOKEN_CSTSTRING
     | TOKEN_NAME
     | TOKEN_CSTINT
