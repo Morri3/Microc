@@ -132,7 +132,8 @@ rule Token = parse          // 每个 规则rule 会生成为一个函数，函�
   | "0"['B''b']['0'-'1']+                { CSTINT (bin2Dec(System.Int32.Parse (binHexOct (lexemeAsString lexbuf))))}    
   | "0"['O''o']['0'-'7']+                { CSTINT (oct2Dec(System.Int32.Parse (binHexOct (lexemeAsString lexbuf)))) }
   | "0"['X''x']['0'-'9''A'-'F''a'-'f']+  {CSTINT (hex2Dec(binHexOct (lexemeAsString lexbuf)))}  
-  
+  | "_"['a'-'z''A'-'Z''0'-'9']*   {failwith "cannot use variable with start _ "}
+  | ['A'-'Z']['a'-'z''A'-'Z''0'-'9']*   {failwith "cannot use variable start with captain letter "}
   | ['a'-'z''A'-'Z']['a'-'z''A'-'Z''0'-'9']*    //一个字母开头的可包含数字的字符串
                     { keyword (lexemeAsString lexbuf) } //标识符处理
                                                         //先查是否是关键字，是则返回对应关键字的Token

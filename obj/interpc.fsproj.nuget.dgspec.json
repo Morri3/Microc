@@ -1,26 +1,26 @@
 {
   "format": 1,
   "restore": {
-    "D:\\bianyi\\Microc\\interpc.fsproj": {}
+    "D:\\compile\\Microc\\interpc.fsproj": {}
   },
   "projects": {
-    "D:\\bianyi\\Microc\\interpc.fsproj": {
+    "D:\\compile\\Microc\\interpc.fsproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "D:\\bianyi\\Microc\\interpc.fsproj",
+        "projectUniqueName": "D:\\compile\\Microc\\interpc.fsproj",
         "projectName": "interpc",
-        "projectPath": "D:\\bianyi\\Microc\\interpc.fsproj",
-        "packagesPath": "C:\\Users\\82444\\.nuget\\packages\\",
-        "outputPath": "D:\\bianyi\\Microc\\obj\\",
+        "projectPath": "D:\\compile\\Microc\\interpc.fsproj",
+        "packagesPath": "C:\\Users\\Cc\\.nuget\\packages\\",
+        "outputPath": "D:\\compile\\Microc\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
-          "C:\\Users\\82444\\AppData\\Roaming\\NuGet\\NuGet.Config"
+          "C:\\Users\\Cc\\AppData\\Roaming\\NuGet\\NuGet.Config"
         ],
         "originalTargetFrameworks": [
           "net6.0"
         ],
         "sources": {
-          "https://nuget.cdn.azure.cn/v3/index.json": {}
+          "https://api.nuget.org/v3/index.json": {}
         },
         "frameworks": {
           "net6.0": {
@@ -60,7 +60,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\6.0.203\\RuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files (x86)\\dotnet\\sdk\\6.0.200\\RuntimeIdentifierGraph.json"
         }
       }
     }
