@@ -161,6 +161,12 @@ rule Token = parse          // 每个 规则rule 会生成为一个函数，函�
   | "%="            { MODASSIGN }   //复合赋值运算符%=
   | "+="            { PLUSASSIGN }  //复合赋值运算符+=
   | "-="            { MINUSASSIGN } //复合赋值运算符-=
+  | "<<"            { BITLEFT }
+  | ">>"            { BITRIGHT }
+  | "~"             { BITNOT }
+  | "^"             { BITXOR }  
+  | "|"             { BITOR }
+  | "&"             { AMP }   
   | "||"            { SEQOR }    //或
   | "&&"            { SEQAND }   //与
   | "&"             { AMP }      //按位与

@@ -386,6 +386,7 @@ let rec exec stmt (locEnv: locEnv) (gloEnv: gloEnv) (store: store) : store =
             | _ -> store1 //未匹配
 
         body stmt1
+    // | Break -> store
 
 and stmtordec stmtordec locEnv gloEnv store =
     match stmtordec with
@@ -431,6 +432,7 @@ and eval e locEnv gloEnv store : int * store =
             | "printc" ->
                 (printf "%c" (char i1)
                  i1)
+            | "~" -> ~~~i1
             | _ -> failwith ("unknown primitive " + ope)
 
         (res, store1) //返回模式匹配计算到的值和存储
@@ -451,6 +453,11 @@ and eval e locEnv gloEnv store : int * store =
             | "<=" -> if i1 <= i2 then 1 else 0
             | ">=" -> if i1 >= i2 then 1 else 0
             | ">" -> if i1 > i2 then 1 else 0
+            | "<<" -> i1 <<< i2
+            | ">>" -> i1 >>> i2
+            | "&" -> i1 &&& i2
+            | "|" -> i1 ||| i2
+            | "^" -> i1 ^^^ i2
             | _ -> failwith ("unknown primitive " + ope)
 
         (res, store2)
@@ -466,6 +473,8 @@ and eval e locEnv gloEnv store : int * store =
             | "*=" -> v1 * v2
             | "/=" -> v1 / v2
             | "%=" -> v1 % v2
+            | "<<" -> v1 <<< v2
+            | ">>" -> v1 >>> v2
             | _ -> failwith ("unknown primitive " + ope)
         
         (res, setSto store2 loc res) //返回的store是把计算结果存到左值acc地址上后的新store

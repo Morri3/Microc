@@ -150,23 +150,6 @@ let x86patch code =
     else
         code 
 
-let makeGlobalEnvs (topdecs: topdec list) : VarEnv * FunEnv * instr list =
-    let rec addv decs varEnv funEnv =
-
-        msg $"\nGlobal funEnv:\n{funEnv}\n"
-
-        match decs with
-        | [] -> (varEnv, funEnv, [])
-        | dec :: decr ->
-            match dec with
-            | Vardec (typ, var) ->
-                let (varEnv1, code1) = allocateWithMsg Glovar (typ, var) varEnv
-                let (varEnvr, funEnvr, coder) = addv decr varEnv1 funEnv
-                (varEnvr, funEnvr, code1 @ coder)
-            | Fundec (tyOpt, f, xs, body) -> addv decr varEnv ((f, ($"{newLabel ()}_{f}", tyOpt, xs)) :: funEnv)
-
-    addv topdecs ([], 0) []
-
 let popEndStack endStack = 
     match endStack with
         | labend :: labels -> labend
@@ -191,7 +174,7 @@ let rec cStmt stmt (varEnv: VarEnv) (funEnv: FunEnv) (endStack: EndStack ): inst
               @ [ Label labelse ] //else标签开始的地方
                 @ cStmt stmt2 varEnv funEnv @ [ Label labend ] //编译语句stmt2，并连上end标签，编译结束
     | Break ->
-        let labend =  endStack.[0]
+        let labend =  endStack lablist
         [GOTO labend]
     | While (e, body) ->
         let labbegin = newLabel () //生成begin标签
@@ -321,9 +304,9 @@ let rec cStmt stmt (varEnv: VarEnv) (funEnv: FunEnv) (endStack: EndStack ): inst
 
 
 //语句 或 声明
-and cStmtOrDec stmtOrDec (varEnv: VarEnv) (funEnv: FunEnv) : VarEnv * instr list =
+and cStmtOrDec stmtOrDec (varEnv: VarEnv) (funEnv: FunEnv) (endStack: EndStack ) : VarEnv * instr list =
     match stmtOrDec with
-    | Stmt stmt -> (varEnv, cStmt stmt varEnv funEnv) //语句
+    | Stmt stmt -> (varEnv, cStmt stmt varEnv funEnv endStack) //语句
     | Dec (typ, x) -> allocateWithMsg Locvar (typ, x) varEnv //调用allocateWithMsg函数为局部变量分配空间
     | DecAndAssign (typ, x, expr) ->
         let (varEnv1,code) = allocateWithMsg Locvar (typ, x) varEnv //调用allocateWithMsg函数为局部变量分配空间
@@ -357,6 +340,7 @@ and cExpr (e: expr) (varEnv: VarEnv) (funEnv: FunEnv) : instr list = //参数：
            | "!" -> [ NOT ]
            | "printi" -> [ PRINTI ]
            | "printc" -> [ PRINTC ]
+           | "~" -> [ BITNOT ]
            | _ -> raise (Failure "unknown primitive 1"))
     | Prim2 (ope, e1, e2) -> //二元表达式
         cExpr e1 varEnv funEnv //计算e1表达式
@@ -373,6 +357,11 @@ and cExpr (e: expr) (varEnv: VarEnv) (funEnv: FunEnv) : instr list = //参数：
              | ">=" -> [ LT; NOT ]
              | ">" -> [ SWAP; LT ]
              | "<=" -> [ SWAP; LT; NOT ] //指令顺序：从左往右
+             | "<<" -> [ BITLEFT ]
+             | ">>" -> [ BITRIGHT ]
+             | "&" -> [ BITAND ]
+             | "|" -> [ BITOR ]
+             | "^" -> [ BITXOR ]
              | _ -> raise (Failure "unknown primitive 2"))
     | Prim3 (ope, acc, e) -> //复合赋值运算符
         cAccess acc varEnv funEnv //计算左值acc

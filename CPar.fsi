@@ -25,6 +25,8 @@ type token =
   | LE
   | SELFINC
   | SELFDEC
+  | BITLEFT
+  | BITRIGHT
   | PLUSASSIGN
   | MINUSASSIGN
   | TIMESASSIGN
@@ -35,6 +37,10 @@ type token =
   | TIMES
   | DIV
   | MOD
+  | BITAND
+  | BITOR
+  | BITXOR
+  | BITNOT
   | CHAR
   | ELSE
   | IF
@@ -82,6 +88,8 @@ type tokenId =
     | TOKEN_LE
     | TOKEN_SELFINC
     | TOKEN_SELFDEC
+    | TOKEN_BITLEFT
+    | TOKEN_BITRIGHT
     | TOKEN_PLUSASSIGN
     | TOKEN_MINUSASSIGN
     | TOKEN_TIMESASSIGN
@@ -92,6 +100,10 @@ type tokenId =
     | TOKEN_TIMES
     | TOKEN_DIV
     | TOKEN_MOD
+    | TOKEN_BITAND
+    | TOKEN_BITOR
+    | TOKEN_BITXOR
+    | TOKEN_BITNOT
     | TOKEN_CHAR
     | TOKEN_ELSE
     | TOKEN_IF
