@@ -66,7 +66,6 @@ type VarEnv = (Var * typ) Env * int
 type Paramdecs = (typ * string) list
 
 type FunEnv = (label * typ option * Paramdecs) Env
-type EndStack = label list
 let isX86Instr = ref false
 
 
@@ -149,11 +148,6 @@ let x86patch code =
         code @ [ CSTI -8; MUL ] // x86 偏移地址*8
     else
         code 
-
-let popEndStack endStack = 
-    match endStack with
-        | labend :: labels -> labend
-        | []        -> failwith "break 无作用域"
 (* ------------------------------------------------------------------- *)
 (* 编译micro-C语句:
    * stmt    是要编译的语句
@@ -161,7 +155,7 @@ let popEndStack endStack =
    * funEnv  是全局函数环境
 *)
 //编译语句
-let rec cStmt stmt (varEnv: VarEnv) (funEnv: FunEnv) (endStack: EndStack ): instr list =
+let rec cStmt stmt (varEnv: VarEnv) (funEnv: FunEnv): instr list =
     match stmt with
     | If (e, stmt1, stmt2) ->
         let labelse = newLabel () //生成else语句的标签
@@ -173,9 +167,7 @@ let rec cStmt stmt (varEnv: VarEnv) (funEnv: FunEnv) (endStack: EndStack ): inst
             @ [ GOTO labend ] //跳转到end标签
               @ [ Label labelse ] //else标签开始的地方
                 @ cStmt stmt2 varEnv funEnv @ [ Label labend ] //编译语句stmt2，并连上end标签，编译结束
-    | Break ->
-        let labend =  endStack lablist
-        [GOTO labend]
+
     | While (e, body) ->
         let labbegin = newLabel () //生成begin标签
         let labtest = newLabel () //生成test标签
@@ -304,9 +296,9 @@ let rec cStmt stmt (varEnv: VarEnv) (funEnv: FunEnv) (endStack: EndStack ): inst
 
 
 //语句 或 声明
-and cStmtOrDec stmtOrDec (varEnv: VarEnv) (funEnv: FunEnv) (endStack: EndStack ) : VarEnv * instr list =
+and cStmtOrDec stmtOrDec (varEnv: VarEnv) (funEnv: FunEnv) : VarEnv * instr list =
     match stmtOrDec with
-    | Stmt stmt -> (varEnv, cStmt stmt varEnv funEnv endStack) //语句
+    | Stmt stmt -> (varEnv, cStmt stmt varEnv funEnv) //语句
     | Dec (typ, x) -> allocateWithMsg Locvar (typ, x) varEnv //调用allocateWithMsg函数为局部变量分配空间
     | DecAndAssign (typ, x, expr) ->
         let (varEnv1,code) = allocateWithMsg Locvar (typ, x) varEnv //调用allocateWithMsg函数为局部变量分配空间
@@ -333,6 +325,13 @@ and cExpr (e: expr) (varEnv: VarEnv) (funEnv: FunEnv) : instr list = //参数：
         cAccess acc varEnv funEnv //计算左值acc
         @ cExpr e varEnv funEnv @ [ STI ] //把表达式e的值写入栈顶
     | CstI i -> [ CSTI i ] //int类型变量
+    | CstF f ->
+        let bytes = System.BitConverter.GetBytes(float32(f))
+        let v = System.BitConverter.ToInt32(bytes, 0)
+        [ CSTI v ]
+    | CstC c -> 
+        let c = (int c)
+        [ CSTI c ]
     | Addr acc -> cAccess acc varEnv funEnv //左值acc的地址
     | Prim1 (ope, e1) -> //一元表达式
         cExpr e1 varEnv funEnv

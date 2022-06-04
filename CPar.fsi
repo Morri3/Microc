@@ -37,6 +37,9 @@ type token =
   | TIMES
   | DIV
   | MOD
+  | PRINTF
+  | FLOAT
+  | BOOL
   | BITAND
   | BITOR
   | BITXOR
@@ -59,6 +62,8 @@ type token =
   | SWITCH
   | CASE
   | BREAK
+  | CSTFLOAT of (float32)
+  | CSTCHAR of (char)
   | CSTSTRING of (string)
   | NAME of (string)
   | CSTINT of (int)
@@ -100,6 +105,9 @@ type tokenId =
     | TOKEN_TIMES
     | TOKEN_DIV
     | TOKEN_MOD
+    | TOKEN_PRINTF
+    | TOKEN_FLOAT
+    | TOKEN_BOOL
     | TOKEN_BITAND
     | TOKEN_BITOR
     | TOKEN_BITXOR
@@ -122,6 +130,8 @@ type tokenId =
     | TOKEN_SWITCH
     | TOKEN_CASE
     | TOKEN_BREAK
+    | TOKEN_CSTFLOAT
+    | TOKEN_CSTCHAR
     | TOKEN_CSTSTRING
     | TOKEN_NAME
     | TOKEN_CSTINT
@@ -147,11 +157,14 @@ type nonTerminalId =
     | NONTERM_StmtU
     | NONTERM_Expr
     | NONTERM_ExprNotAccess
+    | NONTERM_PrintfExpr
     | NONTERM_AtExprNotAccess
     | NONTERM_Access
     | NONTERM_Exprs
     | NONTERM_Exprs1
     | NONTERM_Const
+    | NONTERM_ConstChar
+    | NONTERM_ConstFloat
     | NONTERM_Type
 /// This function maps tokens to integer indexes
 val tagOfToken: token -> int

@@ -26,8 +26,10 @@ let third (_, _, z) = z //取第三个元素
 //%token是词元说明符
 %token <int> CSTINT CSTBOOL           // <int> 是词元的语义值类型，布尔类型的值是0 1，故用int类型表示
 %token <string> CSTSTRING NAME        // CSTSTRING、NAME都是string类型
+%token <char> CSTCHAR
+%token <float32> CSTFLOAT
 
-%token BITAND BITOR BITXOR BITNOT CHAR ELSE IF INT NULL PRINT PRINTLN RETURN VOID WHILE FOR IN DO RANGE UNTIL SWITCH CASE BREAK
+%token FLOAT BOOL BITAND BITOR BITXOR BITNOT CHAR ELSE IF INT NULL PRINT PRINTLN RETURN VOID WHILE FOR IN DO RANGE UNTIL SWITCH CASE BREAK
 %token PLUS MINUS TIMES DIV MOD       //加 减 乘 除 取余
 %token PLUSASSIGN MINUSASSIGN TIMESASSIGN DIVASSIGN MODASSIGN //复合赋值运算符+= -= *= /= %=
 %token BITLEFT BITRIGHT //左移右移
@@ -43,7 +45,7 @@ let third (_, _, z) = z //取第三个元素
 %right QUESMARK COLON     //问号 冒号
 %left SEQOR               //逻辑或||
 %left SEQAND              //逻辑与&&
-%left BITXOR BITOR  BITAND
+%left BITXOR BITOR BITAND
 %left EQ NE               //== !=
 %nonassoc GT LT GE LE     //大于 小于 大于等于 小于等于
 %left BITLEFT BITRIGHT
@@ -245,6 +247,8 @@ AtExprNotAccess:
     // (3)
     // AMP Access  , &x
     Const                               { CstI $1             } // 常量
+  | ConstChar                           { CstC $1 }
+  | ConstFloat                          { CstF $1 }
   | LPAR ExprNotAccess RPAR             { $2                  } // (非左值的情况)
   | AMP Access                          { Addr $2             } // 取地址
 ;
@@ -274,7 +278,18 @@ Const:  //常量
   | NULL                                { -1       }  //null
 ;
 
+ConstChar:
+    CSTCHAR                             { $1       }
+;
+
+ConstFloat:
+    CSTFLOAT                             { $1      }
+  | MINUS CSTFLOAT                       { - $2    }
+;
+
 Type:  //变量
     INT                                 { TypI     }  //int类型
   | CHAR                                { TypC     }  //char类型
+  | FLOAT                               { TypF     }
+  |BOOL                                 { TypB }
 ;

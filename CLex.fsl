@@ -82,14 +82,13 @@ let keyword s =
     match s with
     | "char"    -> CHAR    // 返回对应的Token ,Token 定义于 CPar.fsl 文件中
     | "else"    -> ELSE
-    | "false"   -> CSTBOOL 0
     | "if"      -> IF
     | "int"     -> INT
+    | "float"   -> FLOAT
     | "null"    -> NULL
     | "print"   -> PRINT
     | "println" -> PRINTLN
     | "return"  -> RETURN
-    | "true"    -> CSTBOOL 1
     | "void"    -> VOID
     | "while"   -> WHILE
     | "for"     -> FOR       //for循环
@@ -100,6 +99,9 @@ let keyword s =
     | "switch"  -> SWITCH    //switch
     | "case"    -> CASE      //case
     | "break"   -> BREAK
+    | "bool"    -> BOOL
+    | "false"   -> CSTBOOL 0
+    | "true"    -> CSTBOOL 1
     | _         -> NAME s    // 缺省情况，是标识符的名字，如 函数名，变量名 等
                              // 当所有的关键字没有匹配成功时，则当成标识符
 // 字符串转义符处理函数
@@ -134,6 +136,8 @@ rule Token = parse          // 每个 规则rule 会生成为一个函数，函�
   | "0"['O''o']['0'-'7']+                { CSTINT (oct2Dec(System.Int32.Parse (binHexOct (lexemeAsString lexbuf)))) }
   | "0"['X''x']['0'-'9''A'-'F''a'-'f']+  {CSTINT (hex2Dec(binHexOct (lexemeAsString lexbuf)))}  
   | "_"['a'-'z''A'-'Z''0'-'9']*   {failwith "cannot use variable with start _ "}
+  | ['0'-'9']+'.'['0'-'9']+ 
+                    { CSTFLOAT (System.Single.Parse (lexemeAsString lexbuf)) } 
   | ['A'-'Z']['a'-'z''A'-'Z''0'-'9']*   {failwith "cannot use variable start with captain letter "}
   | ['a'-'z''A'-'Z']['a'-'z''A'-'Z''0'-'9']*    //一个字母开头的可包含数字的字符串
                     { keyword (lexemeAsString lexbuf) } //标识符处理
@@ -166,10 +170,10 @@ rule Token = parse          // 每个 规则rule 会生成为一个函数，函�
   | "~"             { BITNOT }
   | "^"             { BITXOR }  
   | "|"             { BITOR }
-  | "&"             { AMP }   
+  | "&"             { BITAND }      
   | "||"            { SEQOR }    //或
   | "&&"            { SEQAND }   //与
-  | "&"             { AMP }      //按位与
+  | "&"             { AMP }      //取地址
   | "!"             { NOT }      //取反     
   | '('             { LPAR }     //左括号
   | ')'             { RPAR }     //右括号
@@ -186,6 +190,7 @@ rule Token = parse          // 每个 规则rule 会生成为一个函数，函�
   | "/*"            { Comment lexbuf; Token lexbuf }   // 多行注释，调用 Comment规则
   | "(* "            { Comment lexbuf; Token lexbuf }
   | '"'             { CSTSTRING (String [] lexbuf) }   // 调用字符串处理规则
+  | "'"             { try let single = lexemeAsString lexbuf in CSTCHAR (System.Char.Parse(single.Substring(1, 1))) with ex -> failwith "Char literal error." }
   | eof             { EOF }    //End of file
   | _               { failwith "Lexer error: illegal symbol" }
 

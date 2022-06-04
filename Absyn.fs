@@ -16,15 +16,19 @@ module Absyn
 type typ =                           // 类型
   | TypI                             (* Type int                    *) //int类型
   | TypC                             (* Type char                   *) //char类型
+  | TypF
   | TypA of typ * int option         (* Array type                  *) //数组类型
   | TypP of typ                      (* Pointer type                *) //指针类型
-                                                                   
+  | TypB
+                                                                
 and expr =                           // 表达式，右值
   | Access of access                 (* x    or  *p    or  a[e]     *) //访问左值（右值）
   | Assign of access * expr          (* x=e  or  *p=e  or  a[e]=e   *) //赋值语句
   | Addr of access                   (* &x   or  &*p   or  &a[e]    *) //取地址
   | CstI of int                      (* Constant                    *) //int类型常量
   | Prim1 of string * expr           (* Unary primitive operator    *) //一元基本算子
+  | CstC of char
+  | CstF of float32
   | Prim2 of string * expr * expr    (* Binary primitive operator   *) //二元基本算子
   | Andalso of expr * expr           (* Sequential and              *) //与
   | Orelse of expr * expr            (* Sequential or               *) //或

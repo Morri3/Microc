@@ -419,6 +419,11 @@ and eval e locEnv gloEnv store : int * store =
         (res, setSto store2 loc res) //上一行得到的表达式e的值作为元组左边，把该值赋值给acc的地址
                                                    //并设置到store中
     | CstI i -> (i, store) //int类型变量
+    | CstC c -> ((int c), store)
+    | CstF f -> 
+        let bytes = System.BitConverter.GetBytes(float32(f))
+        let v = System.BitConverter.ToInt32(bytes, 0)
+        (v, store)
     | Addr acc -> access acc locEnv gloEnv store //取要求的acc的地址
     | Prim1 (ope, e1) -> //一元基本算子
         let (i1, store1) = eval e1 locEnv gloEnv store //计算表达式e1的值，并得到环境 
