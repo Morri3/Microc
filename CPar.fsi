@@ -37,7 +37,6 @@ type token =
   | TIMES
   | DIV
   | MOD
-  | PRINTF
   | FLOAT
   | BOOL
   | BITAND
@@ -105,7 +104,6 @@ type tokenId =
     | TOKEN_TIMES
     | TOKEN_DIV
     | TOKEN_MOD
-    | TOKEN_PRINTF
     | TOKEN_FLOAT
     | TOKEN_BOOL
     | TOKEN_BITAND
@@ -157,7 +155,6 @@ type nonTerminalId =
     | NONTERM_StmtU
     | NONTERM_Expr
     | NONTERM_ExprNotAccess
-    | NONTERM_PrintfExpr
     | NONTERM_AtExprNotAccess
     | NONTERM_Access
     | NONTERM_Exprs

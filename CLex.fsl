@@ -87,7 +87,7 @@ let keyword s =
     | "float"   -> FLOAT
     | "null"    -> NULL
     | "print"   -> PRINT
-    | "println" -> PRINTLN
+//    | "println" -> PRINTLN
     | "return"  -> RETURN
     | "void"    -> VOID
     | "while"   -> WHILE

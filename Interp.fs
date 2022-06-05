@@ -560,8 +560,81 @@ and callfun f es locEnv gloEnv store : int * store =
     let store3 = exec fBody fBodyEnv gloEnv store2
     (-111, store3)
 
-(* 通过初始化存储和全局环境，然后调用其“main”函数来解释完整的micro-C程序。 *)
 
+//类型检查
+let rec gettyp (e:expr) locEnv gloEnv store : typ =
+    match e with
+    // | Access acc -> //左值
+    // | Assign (acc, e) -> //赋值
+    | CstI i -> TypI //int类型变量
+    | CstC c -> TypC //char
+    | CstF f -> TypF //float
+    // | Addr acc ->  //取要求的acc的地址
+    | Prim1 (ope, e1) -> //一元基本算子
+        let t1 = gettyp e1 locEnv gloEnv store
+        match (ope,t1) with
+        | ("!",TypI) -> TypI
+        | ("printi",TypI) -> TypI
+        | ("printc",TypC) -> TypC
+        | ("~",TypI) -> TypI
+        | _ -> failwith ("unknown primitive " + ope)
+    | Prim2 (ope, e1, e2) -> //二元基本算子
+        let t1 = gettyp e1 locEnv gloEnv store
+        let t2 = gettyp e2 locEnv gloEnv store
+        match (ope,t1,t2) with
+        | ("*",TypI,TypI) -> TypI
+        | ("+",TypI,TypI) -> TypI
+        | ("-",TypI,TypI) -> TypI
+        | ("/",TypI,TypI) -> TypI
+        | ("%",TypI,TypI) -> TypI
+        | ("=",TypI,TypI) -> TypB
+        | ("==",TypI,TypI) -> TypB
+        | ("!=",TypI,TypI) -> TypB
+        | ("<",TypI,TypI) -> TypB
+        | ("<=",TypI,TypI) -> TypB
+        | (">=",TypI,TypI) -> TypB
+        | (">",TypI,TypI) -> TypB
+        | ("<<",TypI,TypI) -> TypI
+        | (">>",TypI,TypI) -> TypI
+        | ("&",TypI,TypI) -> TypI
+        | ("|",TypI,TypI) -> TypI
+        | ("^",TypI,TypI) -> TypI
+        | _ -> failwith ("unknown primitive " + ope)
+    // | Prim3 (ope, acc, e) -> //复合赋值运算符
+    | TernaryOperator (e1, e2, e3) -> //三目运算符
+        let t1 = gettyp e1 locEnv gloEnv store
+        match t1 with
+        | TypB -> 
+            let t2 = gettyp e2 locEnv gloEnv store
+            let t3 = gettyp e3 locEnv gloEnv store
+            if t2 = t3 then t2
+            else failwith ("branch types differ")
+        | _ -> failwith ("condition not boolean")
+    // | PreInc acc -> //前置自增
+    // | PreDec acc -> //前置自减
+    // | NextInc acc -> //后置自增
+    // | NextDec acc -> //后置自减
+    | Andalso (e1, e2) -> //e1 && e2
+        let t1 = gettyp e1 locEnv gloEnv store
+        let t2 = gettyp e2 locEnv gloEnv store
+        if t1 = t2 then t1
+        else failwith ("types differ")
+    | Orelse (e1, e2) -> //e1 || e2
+        let t1 = gettyp e1 locEnv gloEnv store
+        let t2 = gettyp e2 locEnv gloEnv store
+        if t1 = t2 then t1
+        else failwith ("types differ")
+    // | Call (f, es) -> //函数调用
+    | _ -> failwith ("unimplemented checktype")
+//类型检查例子
+let typeCheck e = gettyp e [] [] [];;
+let checkex1 = TernaryOperator(Prim2("==", CstI 11, CstI 12), CstI 111, CstI 666);;
+let checkex2 = Prim2(">", CstI 11, CstI 12);;
+let checkex3 = Prim2("*", CstI 2, CstI 5);;
+let res = List.map typeCheck [checkex1; checkex2; checkex3];;
+
+
+(* 通过初始化存储和全局环境，然后调用其“main”函数来解释完整的micro-C程序。 *)
 // run 返回的结果是 代表内存更改的 store 类型
 // vs 参数列表 [8,2,...]
 // 可以为空 []
@@ -595,7 +668,7 @@ let run (Prog topdecs) vs =
     //全局环境 (变量,函数定义)
     // fac 的 AST
     // main 的 AST
-    sprintf $"\n varEnv:\n {varEnv} \nfunEnv:\n{funEnv}\n"
+    sprintf $"\nvarEnv:\n {varEnv} \nfunEnv:\n{funEnv}\n"
     +
 
     //当前存储

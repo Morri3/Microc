@@ -79,6 +79,9 @@ D:\compile\bigwork\Microc\obj\Debug\net6.0\interpc.fsproj.CopyComplete
 D:\compile\bigwork\Microc\obj\Debug\net6.0\interpc.dll
 D:\compile\bigwork\Microc\obj\Debug\net6.0\interpc.pdb
 D:\compile\bigwork\Microc\obj\Debug\net6.0\interpc.genruntimeconfig.cache
+D:\compile\Microc\obj\Debug\net6.0\interpc.fsproj.AssemblyReference.cache
+D:\compile\Microc\obj\Debug\net6.0\interpc.AssemblyInfoInputs.cache
+D:\compile\Microc\obj\Debug\net6.0\interpc.AssemblyInfo.fs
 D:\bianyi\Microc\bin\Debug\net6.0\interpc.exe
 D:\bianyi\Microc\bin\Debug\net6.0\interpc.deps.json
 D:\bianyi\Microc\bin\Debug\net6.0\interpc.runtimeconfig.json
@@ -106,6 +109,3 @@ D:\bianyi\Microc\obj\Debug\net6.0\interpc.fsproj.CopyComplete
 D:\bianyi\Microc\obj\Debug\net6.0\interpc.dll
 D:\bianyi\Microc\obj\Debug\net6.0\interpc.pdb
 D:\bianyi\Microc\obj\Debug\net6.0\interpc.genruntimeconfig.cache
-D:\compile\Microc\obj\Debug\net6.0\interpc.fsproj.AssemblyReference.cache
-D:\compile\Microc\obj\Debug\net6.0\interpc.AssemblyInfoInputs.cache
-D:\compile\Microc\obj\Debug\net6.0\interpc.AssemblyInfo.fs
