@@ -279,7 +279,12 @@ let rec exec stmt (locEnv: locEnv) (gloEnv: gloEnv) (store: store) : store =
 
         loop stmts (locEnv, store)
 
-    | Return _ -> failwith "return not implemented"      // 解释器暂未实现return
+    | Return e1 -> //return返回函数
+        match e1 with//模式匹配表达式e1
+        | Some e2 -> //return 一些值
+            let (res, store1) = eval e2 locEnv gloEnv store//计算表达式e2
+            setSto store1 -1 res//在-1位置上set值=res，然后返回新的store
+        | None -> store//return空的就直接返回store
 
     | For (e1, e2, e3, body) -> //for循环
         let (v1, store1) = eval e1 locEnv gloEnv store //计算初始化表达式的值，得到更新过的store1
@@ -389,6 +394,7 @@ let rec exec stmt (locEnv: locEnv) (gloEnv: gloEnv) (store: store) : store =
             | _ -> store1 //未匹配
 
         body stmt1
+
     // | Break -> store
 
 and stmtordec stmtordec locEnv gloEnv store =
@@ -422,8 +428,8 @@ and eval e locEnv gloEnv store : int * store =
         (res, setSto store2 loc res) //上一行得到的表达式e的值作为元组左边，把该值赋值给acc的地址
                                                    //并设置到store中
     | CstI i -> (i, store) //int类型变量
-    | CstC c -> ((int c), store)
-    | CstF f -> 
+    | CstC c -> ((int c), store) //char类型变量
+    | CstF f -> //float类型变量
         let bytes = System.BitConverter.GetBytes(float32(f))
         let v = System.BitConverter.ToInt32(bytes, 0)
         (v, store)
@@ -491,12 +497,12 @@ and eval e locEnv gloEnv store : int * store =
             | _ -> failwith ("unknown primitive " + ope)
         
         (res, setSto store2 loc res) //返回的store是把计算结果存到左值acc地址上后的新store
-    | Max (e1, e2) ->
+    | Max (e1, e2) -> //取最大值函数
         let (i1, store1) = eval e1 locEnv gloEnv store
         let (i2, store2) = eval e2 locEnv gloEnv store1
         let res = (if i1 > i2 then i1 else i2)
         (res, store2)
-    | Min (e1, e2) ->
+    | Min (e1, e2) -> //取最小值函数
         let (i1, store1) = eval e1 locEnv gloEnv store
         let (i2, store2) = eval e2 locEnv gloEnv store1
         let res = (if i1 < i2 then i1 else i2)

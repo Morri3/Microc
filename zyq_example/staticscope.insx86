@@ -1,0 +1,32 @@
+INCSP 1
+LDARGS 0
+CALL (0, "L3_main")
+STOP
+FLabel (0, "L1_b")
+GVAR 0
+LDI
+PRINTI
+INCSP -1
+INCSP 0
+RET -1
+FLabel (0, "L2_a")
+INCSP 1
+GETBP
+OFFSET 0
+ADD
+CSTI 5
+STI
+INCSP -1
+CALL (0, "L1_b")
+RET 1
+INCSP -1
+RET -1
+FLabel (0, "L3_main")
+GVAR 0
+CSTI 3
+STI
+INCSP -1
+CALL (0, "L2_a")
+INCSP -1
+INCSP 0
+RET -1
