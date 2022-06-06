@@ -80,6 +80,8 @@ let binHexOct (s:string) =
 // keyword 处理关键字与标识符的辅助函数
 let keyword s = 
     match s with
+    | "Max"     -> MAX
+    | "Min"     -> MIN
     | "char"    -> CHAR    // 返回对应的Token ,Token 定义于 CPar.fsl 文件中
     | "else"    -> ELSE
     | "if"      -> IF
@@ -138,7 +140,6 @@ rule Token = parse          // 每个 规则rule 会生成为一个函数，函�
   | "_"['a'-'z''A'-'Z''0'-'9']*   {failwith "cannot use variable with start _ "}
   | ['0'-'9']+'.'['0'-'9']+ 
                     { CSTFLOAT (System.Single.Parse (lexemeAsString lexbuf)) } 
-  | ['A'-'Z']['a'-'z''A'-'Z''0'-'9']*   {failwith "cannot use variable start with captain letter "}
   | ['a'-'z''A'-'Z']['a'-'z''A'-'Z''0'-'9']*    //一个字母开头的可包含数字的字符串
                     { keyword (lexemeAsString lexbuf) } //标识符处理
                                                         //先查是否是关键字，是则返回对应关键字的Token

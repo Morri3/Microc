@@ -341,6 +341,22 @@ and cExpr (e: expr) (varEnv: VarEnv) (funEnv: FunEnv) : instr list = //参数：
            | "printc" -> [ PRINTC ]
            | "~" -> [ BITNOT ]
            | _ -> raise (Failure "unknown primitive 1"))
+    | Max(e1, e2) ->
+        let labtrue = newLabel()
+        let labend = newLabel()
+        cExpr e1 varEnv funEnv  
+            @ cExpr e2 varEnv funEnv  @ [LT] @ [IFNZRO labtrue]
+                @ cExpr e1 varEnv funEnv  
+                    @ [GOTO labend; Label labtrue] 
+                        @ cExpr e2 varEnv funEnv @ [Label labend]
+    | Min(e1, e2) ->
+        let labtrue = newLabel()
+        let labend = newLabel()
+        cExpr e1 varEnv funEnv
+            @ cExpr e2 varEnv funEnv @ [LT] @ [IFNZRO labtrue]
+                @ cExpr e2 varEnv funEnv 
+                    @ [GOTO labend; Label labtrue] 
+                        @ cExpr e1 varEnv funEnv  @ [Label labend]
     | Prim2 (ope, e1, e2) -> //二元表达式
         cExpr e1 varEnv funEnv //计算e1表达式
         @ cExpr e2 varEnv funEnv //计算e2表达式

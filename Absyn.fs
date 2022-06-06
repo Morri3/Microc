@@ -27,6 +27,8 @@ and expr =                           // 表达式，右值
   | Addr of access                   (* &x   or  &*p   or  &a[e]    *) //取地址
   | CstI of int                      (* Constant                    *) //int类型常量
   | Prim1 of string * expr           (* Unary primitive operator    *) //一元基本算子
+  | Print of string * expr
+  | Println of access
   | CstC of char
   | CstF of float32
   | Prim2 of string * expr * expr    (* Binary primitive operator   *) //二元基本算子
@@ -39,7 +41,9 @@ and expr =                           // 表达式，右值
   | NextDec of access                            //后置自减 i-- or a[e]--
   | TernaryOperator of expr * expr * expr        //三目运算符 ? :
   | Prim3 of string * access * expr              //复合赋值运算符
-                                                                   
+  | Max of expr * expr               (* Max function                *)
+  | Min of expr * expr               (* Min function                *)
+
 and access =                         //左值，存储的位置                                            
   | AccVar of string                 (* Variable access        x    *) //变量
   | AccDeref of expr                 (* Pointer dereferencing  *p   *) //指针，左值代表地址p本身

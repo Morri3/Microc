@@ -61,6 +61,8 @@ type token =
   | SWITCH
   | CASE
   | BREAK
+  | MAX
+  | MIN
   | CSTFLOAT of (float32)
   | CSTCHAR of (char)
   | CSTSTRING of (string)
@@ -128,6 +130,8 @@ type tokenId =
     | TOKEN_SWITCH
     | TOKEN_CASE
     | TOKEN_BREAK
+    | TOKEN_MAX
+    | TOKEN_MIN
     | TOKEN_CSTFLOAT
     | TOKEN_CSTCHAR
     | TOKEN_CSTSTRING

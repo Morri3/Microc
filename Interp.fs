@@ -193,7 +193,10 @@ let rec allocate (typ, x) (env0, nextloc) sto0 : locEnv * store =
     let (nextloc1, v, sto1) =
         match typ with
         //数组 调用 initSto 分配 i 个空间
-        | TypA (t, Some i) -> (nextloc + i, nextloc, initSto nextloc i sto0)
+        | TypA (t, Some i) -> 
+        let store = initSto nextloc i sto0
+        let store1 = setSto store (nextloc + i) i //存入数组长度
+        (nextloc + i + 1, nextloc, store1)
         // 常规变量默认值是 0
         | _ -> (nextloc, 0, sto0)
 
@@ -425,6 +428,11 @@ and eval e locEnv gloEnv store : int * store =
         let v = System.BitConverter.ToInt32(bytes, 0)
         (v, store)
     | Addr acc -> access acc locEnv gloEnv store //取要求的acc的地址
+    | Print(op,e1)   -> let (i1, store1) = eval e1 locEnv gloEnv store
+                        let res = 
+                          match op with
+                          | "%d"   -> (printf "%d " i1 ; i1) 
+                        (res, store1) 
     | Prim1 (ope, e1) -> //一元基本算子
         let (i1, store1) = eval e1 locEnv gloEnv store //计算表达式e1的值，并得到环境 
 
@@ -483,6 +491,16 @@ and eval e locEnv gloEnv store : int * store =
             | _ -> failwith ("unknown primitive " + ope)
         
         (res, setSto store2 loc res) //返回的store是把计算结果存到左值acc地址上后的新store
+    | Max (e1, e2) ->
+        let (i1, store1) = eval e1 locEnv gloEnv store
+        let (i2, store2) = eval e2 locEnv gloEnv store1
+        let res = (if i1 > i2 then i1 else i2)
+        (res, store2)
+    | Min (e1, e2) ->
+        let (i1, store1) = eval e1 locEnv gloEnv store
+        let (i2, store2) = eval e2 locEnv gloEnv store1
+        let res = (if i1 < i2 then i1 else i2)
+        (res, store2)
     | TernaryOperator (e1, e2, e3) -> //三目运算符
         let (v, store1) = eval e1 locEnv gloEnv store //计算表达式e1的值
         if v <> 0 then //表达式e1不为0
@@ -534,6 +552,9 @@ and access acc locEnv gloEnv store : int * store =
         let (a, store1) = access acc locEnv gloEnv store //先计算左值acc的地址和环境
         let aval = getSto store1 a //得到acc的地址上的值
         let (i, store2) = eval idx locEnv gloEnv store1 //计算store1中，索引是idx的值
+        let len = getSto store1 (a - 1)
+        if i >= len || i < 0 then
+            failwith ("index out of array")
         (aval + i, store2) //首地址+i（i就是偏移量） 更改后的store
 
 and evals es locEnv gloEnv store : int list * store =
