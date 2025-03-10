@@ -1,4 +1,4 @@
 # Microc
-This is the coursework during undergraduate period.
+This is the coursework during the undergraduate period.
 
 ---
