@@ -1,4 +1,4 @@
 # Microc
-This is the coursework during the undergraduate period.
+This is the project produced in 2021-2022.
 
 ---
